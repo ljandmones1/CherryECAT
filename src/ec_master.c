@@ -403,7 +403,7 @@ static void ec_master_nonperiod_thread(void *argument)
     }
 }
 
-static void ec_master_idle_thread(void *argument)
+static void ec_master_scan_thread(void *argument)
 {
     ec_master_t *master = (ec_master_t *)argument;
 
@@ -411,7 +411,7 @@ static void ec_master_idle_thread(void *argument)
         ec_osal_mutex_take(master->scan_lock);
         ec_slaves_scanning(master);
         ec_osal_mutex_give(master->scan_lock);
-        ec_osal_msleep(CONFIG_EC_IDLE_INTERVAL_MS);
+        ec_osal_msleep(CONFIG_EC_SCAN_INTERVAL_MS);
     }
 }
 
@@ -491,8 +491,8 @@ int ec_master_init(ec_master_t *master, uint8_t master_index)
         return -1;
     }
 
-    master->idle_thread = ec_osal_thread_create("ec_idle", CONFIG_EC_IDLE_STACKSIZE, CONFIG_EC_IDLE_PRIO, ec_master_idle_thread, master);
-    if (!master->idle_thread) {
+    master->scan_thread = ec_osal_thread_create("ec_scan", CONFIG_EC_SCAN_STACKSIZE, CONFIG_EC_SCAN_PRIO, ec_master_scan_thread, master);
+    if (!master->scan_thread) {
         return -1;
     }
 

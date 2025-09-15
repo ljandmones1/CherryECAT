@@ -108,7 +108,7 @@ typedef struct ec_master {
 #endif
 
     ec_osal_mutex_t scan_lock;
-    ec_osal_thread_t idle_thread;
+    ec_osal_thread_t scan_thread;
     ec_osal_thread_t nonperiod_thread;
     ec_osal_sem_t nonperiod_sem;
     struct ec_osal_timer *linkdetect_timer;
