@@ -5,6 +5,7 @@
  */
 #include "ec_master.h"
 
+#ifdef CONFIG_EC_PERF_ENABLE
 void ec_perf_init(ec_perf_t *perf, uint64_t expected_interval_us)
 {
     memset(perf, 0, sizeof(ec_perf_t));
@@ -76,3 +77,4 @@ void ec_perf_print_statistics(ec_perf_t *perf)
 
     EC_LOG_RAW("===================================\n");
 }
+#endif

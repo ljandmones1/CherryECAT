@@ -100,6 +100,27 @@ static void task_start(void *param)
 
 CSH_CMD_EXPORT(ethercat, );
 
+static ec_pdo_entry_info_t dio_1600[] = {
+    { 0x6000, 0x00, 0x20 },
+};
+
+static ec_pdo_entry_info_t dio_1a00[] = {
+    { 0x7010, 0x00, 0x20 },
+};
+
+static ec_pdo_info_t dio_rxpdos[] = {
+    { 0x1600, 1, &dio_1600[0] },
+};
+
+static ec_pdo_info_t dio_txpdos[] = {
+    { 0x1a00, 1, &dio_1a00[0] },
+};
+
+static ec_sync_info_t dio_syncs[] = {
+    { 2, EC_DIR_OUTPUT, 1, dio_rxpdos },
+    { 3, EC_DIR_INPUT, 1, dio_txpdos },
+};
+
 static ec_pdo_entry_info_t coe402_1602[] = {
     { 0x6040, 0x00, 0x10 },
     { 0x60ff, 0x00, 0x20 },
@@ -127,7 +148,8 @@ static ec_sync_info_t cia402_syncs[] = {
 
 int ec_start(int argc, const char **argv)
 {
-    static ec_slave_config_t slave_config;
+    static ec_slave_config_t slave_cia402_config;
+    static ec_slave_config_t slave_dio_config;
 
     if (g_ec_master.slave_count == 0) {
         printf("No slave found, please check the connection\r\n");
@@ -139,18 +161,44 @@ int ec_start(int argc, const char **argv)
         return -1;
     }
 
-    slave_config.dc_assign_activate = 0x300;
+    slave_cia402_config.dc_assign_activate = 0x300;
 
-    slave_config.dc_sync[0].cycle_time = atoi(argv[1]) * 1000;
-    slave_config.dc_sync[0].shift_time = 1000000;
-    slave_config.dc_sync[1].cycle_time = 0;
-    slave_config.dc_sync[1].shift_time = 0;
+    slave_cia402_config.dc_sync[0].cycle_time = atoi(argv[1]) * 1000;
+    slave_cia402_config.dc_sync[0].shift_time = 1000000;
+    slave_cia402_config.dc_sync[1].cycle_time = 0;
+    slave_cia402_config.dc_sync[1].shift_time = 0;
 
-    slave_config.sync = cia402_syncs;
-    slave_config.sync_count = sizeof(cia402_syncs) / sizeof(ec_sync_info_t);
+    slave_cia402_config.sync = cia402_syncs;
+    slave_cia402_config.sync_count = sizeof(cia402_syncs) / sizeof(ec_sync_info_t);
+
+    slave_dio_config.dc_assign_activate = 0x300;
+
+    slave_dio_config.dc_sync[0].cycle_time = atoi(argv[1]) * 1000;
+    slave_dio_config.dc_sync[0].shift_time = 1000000;
+    slave_dio_config.dc_sync[1].cycle_time = 0;
+    slave_dio_config.dc_sync[1].shift_time = 0;
+    slave_dio_config.sync = dio_syncs;
+    slave_dio_config.sync_count = sizeof(dio_syncs) / sizeof(ec_sync_info_t);
 
     for (uint32_t i = 0; i < g_ec_master.slave_count; i++) {
-        g_ec_master.slaves[i].config = &slave_config;
+        if (g_ec_master.slaves[i].sii.vendor_id != 0x0048504D) { // HPMicro
+            EC_LOG_ERR("Unsupported slave found: vendor_id=0x%08x\n", g_ec_master.slaves[i].sii.vendor_id);
+            return -1;
+        }
+
+        switch (g_ec_master.slaves[i].sii.product_code) {
+            case 0x00000001: // DIO
+                g_ec_master.slaves[i].config = &slave_dio_config;
+                break;
+            case 0x00000002: // FOE
+                break;
+            case 0x00000003: // CIA402
+                g_ec_master.slaves[i].config = &slave_cia402_config;
+                break;
+
+            default:
+                break;
+        }
     }
 
     ec_master_start(&g_ec_master, atoi(argv[1]));

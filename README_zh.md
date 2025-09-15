@@ -24,6 +24,7 @@ CherryECAT 是一个小而美的、高实时性、低抖动的 EtherCAT 主机�
 - 支持 Slave 寄存器读写
 - 支持多主站
 - 支持备份冗余
+- 最小 PDO cyclic time < 40 us (实际数值受主站硬件和从站硬件影响)
 - 支持 ethercat 命令行交互，参考 IgH
 
 ## 硬件限制

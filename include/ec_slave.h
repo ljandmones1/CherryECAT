@@ -107,5 +107,6 @@ typedef struct ec_slave {
 } ec_slave_t;
 
 void ec_slaves_scanning(ec_master_t *master);
+char *ec_slave_get_sii_string(const ec_slave_t *slave, uint32_t index);
 
 #endif

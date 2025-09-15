@@ -125,7 +125,7 @@ typedef struct {
 
 const char *ec_state_string(uint8_t states, uint8_t multi)
 {
-    off_t off = 0;
+    uint32_t off = 0;
     unsigned int first = 1;
     static char buffer[64];
 

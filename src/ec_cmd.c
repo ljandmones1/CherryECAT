@@ -5,7 +5,7 @@
  */
 #include "ec_master.h"
 
-#define EC_IOCTL_STRING_SIZE 64
+#ifdef CONFIG_EC_CMD_ENABLE
 
 typedef struct {
     uint32_t slave_count;
@@ -77,10 +77,10 @@ typedef struct {
     uint8_t sync_count;
     uint16_t sdo_count;
     uint32_t sii_nwords;
-    char group[EC_IOCTL_STRING_SIZE];
-    char image[EC_IOCTL_STRING_SIZE];
-    char order[EC_IOCTL_STRING_SIZE];
-    char name[EC_IOCTL_STRING_SIZE];
+    char *group;
+    char *image;
+    char *order;
+    char *name;
 } ec_cmd_slave_info_t;
 
 static ec_master_t *global_cmd_master = NULL;
@@ -92,27 +92,31 @@ void ec_master_cmd_init(ec_master_t *master)
 
 static void ec_master_cmd_show_help(void)
 {
-    EC_LOG_RAW("CherryECAT " CHERRYECAT_VERSION_STR " Command Line Tool\n");
-    EC_LOG_RAW("Usage: ethercat <command> [options]\n\n");
+    EC_LOG_RAW("CherryECAT " CHERRYECAT_VERSION_STR " Command Line Tool\n\n");
+    EC_LOG_RAW("Usage: ethercat <command> [options]\n");
     EC_LOG_RAW("Commands:\n");
-    EC_LOG_RAW("  master                  Show master information\n");
-    EC_LOG_RAW("  slaves                  Show slaves overview\n");
-    EC_LOG_RAW("  slaves -v               Show detailed information for all slaves\n");
-    EC_LOG_RAW("  slaves -p <idx>         Show information for slave <idx>\n");
-    EC_LOG_RAW("  slaves -p <idx> -v      Show detailed information for slave <idx>\n");
-    EC_LOG_RAW("  pdos                    Show PDOs for all slaves\n");
-    EC_LOG_RAW("  pdos -p <idx>           Show PDOs for slave <idx>\n");
-    EC_LOG_RAW("  states <state>          Request state for all slaves (hex)\n");
-    EC_LOG_RAW("  states -p <idx> <state> Request state for slave <idx> (hex)\n");
-    EC_LOG_RAW("  coe_read -p [idx] [index] [subindex] Read SDO via CoE\n");
-    EC_LOG_RAW("  coe_write -p [idx] [index] [subindex] [value] Write SDO via CoE\n");
-    EC_LOG_RAW("  sii_read -p [idx]       Read SII\n");
-    EC_LOG_RAW("  wc                      Show master working counter\n");
+    EC_LOG_RAW("  master                                         Show master information\n");
+    EC_LOG_RAW("  slaves                                         Show slaves overview\n");
+    EC_LOG_RAW("  slaves -v                                      Show detailed information for all slaves\n");
+    EC_LOG_RAW("  slaves -p <idx>                                Show information for slave <idx>\n");
+    EC_LOG_RAW("  slaves -p <idx> -v                             Show detailed information for slave <idx>\n");
+    EC_LOG_RAW("  pdos                                           Show PDOs for all slaves\n");
+    EC_LOG_RAW("  pdos -p <idx>                                  Show PDOs for slave <idx>\n");
+    EC_LOG_RAW("  states <state>                                 Request state for all slaves (hex)\n");
+    EC_LOG_RAW("  states -p <idx> <state>                        Request state for slave <idx> (hex)\n");
+    EC_LOG_RAW("  coe_read -p [idx] [index] [subindex]           Read SDO via CoE\n");
+    EC_LOG_RAW("  coe_write -p [idx] [index] [subindex] [value]  Write SDO via CoE\n");
+    EC_LOG_RAW("  pdo_read                                       Read process data\n");
+    EC_LOG_RAW("  pdo_read -p [idx]                              Read slave <idx> process data\n");
+    EC_LOG_RAW("  pdo_write [offset] [data]                      Write process data with offset\n");
+    EC_LOG_RAW("  pdo_write -p [idx] [offset] [data]             Write slave <idx> process data with offset\n");
+    EC_LOG_RAW("  sii_read -p [idx]                              Read SII\n");
+    EC_LOG_RAW("  wc                                             Show master working counter\n");
 #ifdef CONFIG_EC_PERF_ENABLE
-    EC_LOG_RAW("  perf -s <time>          Start performance test\n");
-    EC_LOG_RAW("  perf -v                 Show performance statistics\n");
+    EC_LOG_RAW("  perf -s <time>                                 Start performance test\n");
+    EC_LOG_RAW("  perf -v                                        Show performance statistics\n");
 #endif
-    EC_LOG_RAW("  help                    Show this help\n\n");
+    EC_LOG_RAW("  help                                           Show this help\n\n");
 }
 
 static const char *ec_slave_state_string(uint8_t state)
@@ -249,6 +253,11 @@ static void ec_master_get_slave_info(ec_slave_t *slave, ec_cmd_slave_info_t *inf
     info->has_dc_system_time = slave->has_dc_system_time;
     info->transmission_delay = slave->transmission_delay;
     info->current_state = slave->current_state;
+
+    info->group = ec_slave_get_sii_string(slave, slave->sii.general.groupidx);
+    info->image = ec_slave_get_sii_string(slave, slave->sii.general.imgidx);
+    info->order = ec_slave_get_sii_string(slave, slave->sii.general.orderidx);
+    info->name = ec_slave_get_sii_string(slave, slave->sii.general.nameidx);
 }
 
 void ec_master_cmd_master(ec_master_t *master)
@@ -398,7 +407,7 @@ static void ec_cmd_show_slave_detail(ec_master_t *master, uint32_t slave_idx)
     EC_LOG_RAW("=== Master %d, Slave %d ===\n", master->index, slave_idx);
 
     if (data.alias != 0) {
-        EC_LOG_RAW("Alias: %d\n", data.alias != 0);
+        EC_LOG_RAW("Alias: 0x%04x\n", data.alias);
     }
 
     EC_LOG_RAW("Device: %s\n", master->netdev[slave->netdev_idx]->name);
@@ -483,10 +492,10 @@ static void ec_cmd_show_slave_detail(ec_master_t *master, uint32_t slave_idx)
 
     if (data.has_general) {
         EC_LOG_RAW("General:\n");
-        // EC_LOG_RAW("  Group: %s\n", data.sii.group ? data.sii.group : "");
-        // EC_LOG_RAW("  Image name: %s\n", data.sii.image ? data.sii.image : "");
-        // EC_LOG_RAW("  Order number: %s\n", data.sii.order ? data.sii.order : "");
-        // EC_LOG_RAW("  Device name: %s\n", data.sii.name ? data.sii.name : "");
+        EC_LOG_RAW("  Group: %s\n", data.group ? data.group : "");
+        EC_LOG_RAW("  Image name: %s\n", data.image ? data.image : "");
+        EC_LOG_RAW("  Order number: %s\n", data.order ? data.order : "");
+        EC_LOG_RAW("  Device name: %s\n", data.name ? data.name : "");
 
         if (data.mailbox_protocols & EC_MBXPROT_COE) {
             EC_LOG_RAW("  CoE details:\n");
@@ -731,7 +740,7 @@ int ethercat(int argc, const char **argv)
         ec_datagram_clear(&datagram);
 
         return 0;
-    } else if (argc >= 6 && strcmp(argv[1], "coe_write") == 0) {
+    } else if (argc >= 7 && strcmp(argv[1], "coe_write") == 0) {
         // ethercat coe_write -p [slave_idx] [index] [subindex] [u32data]
         static ec_datagram_t datagram;
         uint32_t u32data;
@@ -779,6 +788,88 @@ int ethercat(int argc, const char **argv)
                    global_cmd_master->slaves[slave_idx].sii_nwords * 2);
 
         return 0;
+    } else if (argc >= 2 && strcmp(argv[1], "pdo_read") == 0) {
+        // ethercat pdo_read
+        if (argc == 2) {
+            for (uint32_t count = 0; count < 10; count++) {
+                EC_LOG_RAW("\r");
+                for (uint32_t i = 0; i < global_cmd_master->actual_pdo_size; i++) {
+                    EC_LOG_RAW("%02x ", global_cmd_master->pdo_buffer[EC_NETDEV_MAIN][i]);
+                }
+                //fflush(stdout);
+                if (count < 9) {
+                    ec_osal_msleep(1000);
+                }
+            }
+            EC_LOG_RAW("\n");
+            return 0;
+        } else if (argc == 4 && strcmp(argv[2], "-p") == 0) {
+            // ethercat pdo_read -p [slave_idx]
+            uint32_t slave_idx = atoi(argv[3]);
+            if (slave_idx >= global_cmd_master->slave_count) {
+                EC_LOG_RAW("No slaves found\n");
+                return -1;
+            }
+            uint8_t *buffer = ec_master_get_slave_domain(global_cmd_master, slave_idx);
+            uint32_t data_size = ec_master_get_slave_domain_size(global_cmd_master, slave_idx);
+
+            for (uint32_t count = 0; count < 10; count++) {
+                EC_LOG_RAW("\r");
+                for (uint32_t i = 0; i < data_size; i++) {
+                    EC_LOG_RAW("%02x ", buffer[i]);
+                }
+                //fflush(stdout);
+                if (count < 9) {
+                    ec_osal_msleep(1000);
+                }
+            }
+            EC_LOG_RAW("\n");
+            return 0;
+        } else {
+        }
+    } else if (argc >= 4 && strcmp(argv[1], "pdo_write") == 0) {
+        // ethercat pdo_write -p [slave_idx] [offset] [data]
+        if (argc >= 6 && strcmp(argv[2], "-p") == 0) {
+            uint32_t slave_idx = atoi(argv[3]);
+            if (slave_idx >= global_cmd_master->slave_count) {
+                EC_LOG_RAW("No slaves found\n");
+                return -1;
+            }
+
+            uint32_t offset = strtol(argv[4], NULL, 16);
+            uint32_t data = strtol(argv[5], NULL, 16);
+            uint32_t size;
+
+            if (data < 0xff)
+                size = 1;
+            else if (data < 0xffff)
+                size = 2;
+            else
+                size = 4;
+
+            uint8_t *buffer = ec_master_get_slave_domain(global_cmd_master, slave_idx);
+
+            ec_memcpy(&buffer[offset], &data, size);
+
+            return 0;
+        } else {
+            uint32_t offset = strtol(argv[2], NULL, 16);
+            uint32_t data = strtol(argv[3], NULL, 16);
+            uint32_t size;
+
+            if (data < 0xff)
+                size = 1;
+            else if (data < 0xffff)
+                size = 2;
+            else
+                size = 4;
+
+            for (uint32_t slave_idx = 0; slave_idx < global_cmd_master->slave_count; slave_idx++) {
+                uint8_t *buffer = ec_master_get_slave_domain(global_cmd_master, slave_idx);
+                ec_memcpy(&buffer[offset], &data, size);
+            }
+            return 0;
+        }
     } else {
     }
 
@@ -786,3 +877,10 @@ int ethercat(int argc, const char **argv)
     ec_master_cmd_show_help();
     return -1;
 }
+
+#ifdef FINSH_USING_MSH
+#include <finsh.h>
+MSH_CMD_EXPORT(ethercat, cherryecat command line tool);
+#endif
+
+#endif

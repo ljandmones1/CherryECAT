@@ -5,6 +5,7 @@ if(CONFIG_CHERRYECAT)
     )
 
     list(APPEND cherryec_srcs
+        ${CMAKE_CURRENT_LIST_DIR}/src/ec_cmd.c
         ${CMAKE_CURRENT_LIST_DIR}/src/ec_coe.c
         ${CMAKE_CURRENT_LIST_DIR}/src/ec_common.c
         ${CMAKE_CURRENT_LIST_DIR}/src/ec_datagram.c
@@ -15,10 +16,6 @@ if(CONFIG_CHERRYECAT)
         ${CMAKE_CURRENT_LIST_DIR}/src/ec_sii.c
         ${CMAKE_CURRENT_LIST_DIR}/src/ec_slave.c
     )
-
-    if(CONFIG_CHERRYECAT_CMD)
-        list(APPEND cherryec_srcs ${CMAKE_CURRENT_LIST_DIR}/src/ec_cmd.c)
-    endif()
 
     if(DEFINED CONFIG_CHERRYECAT_OSAL)
         if("${CONFIG_CHERRYECAT_OSAL}" STREQUAL "freertos")

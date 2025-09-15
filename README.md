@@ -24,14 +24,15 @@ CherryECAT is a tiny and beautiful, high real-time and low-jitter EtherCAT maste
 - Support Slave register access
 - Support multi master
 - Support backup redundancy
-- Support ethercat cmd in shell, ref to IGH
+- Minimum PDO cyclic time < 40 us (depends on master and slave hardware)
+- Support ethercat cmd with shell, ref to IgH
 
 ## Hardware limitations
 
 - **Master**
 	- CPU (cache > 16K, memcpy speed > 100MB/s)
 	- ENET must support descriptor dma and iperf with lwip > 90 Mbps
-	- Code must run in ram
+	- Code must run in ram, ignore if no dc
 	- Must support High-Precision Timer (jitter < 1us)
 	- Must support High-Precision timestamp (like ARM DWT)
 	- Must support long long print

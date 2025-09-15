@@ -8,6 +8,7 @@ LIBS    = []
 LIBPATH = []
 CPPDEFINES = []
 
+src += Glob('src/ec_cmd.c')
 src += Glob('src/ec_coe.c')
 src += Glob('src/ec_common.c')
 src += Glob('src/ec_datagram.c')
@@ -18,9 +19,6 @@ src += Glob('src/ec_perf.c')
 src += Glob('src/ec_sii.c')
 src += Glob('src/ec_slave.c')
 src += Glob('src/osal/ec_osal_rtthread.c')
-
-if GetDepend(['PKG_CHERRYECAT_CMD']):
-    src += Glob('src/ec_cmd.c')
 
 group = DefineGroup('CherryECAT', src, depend = ['PKG_USING_CHERRYECAT'], LIBS = LIBS, LIBPATH=LIBPATH, CPPPATH = path, CPPDEFINES = CPPDEFINES)
 
