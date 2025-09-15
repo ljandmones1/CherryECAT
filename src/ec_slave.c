@@ -529,51 +529,103 @@ static int ec_slave_config(ec_master_t *master, ec_slave_t *slave)
                          ec_state_string(slave->requested_state, 0), slave->index);
         return ret;
     }
-#if 0
-    uint32_t size;
-    // Scanning PDO assignment and mapping
-    ret = ec_coe_upload(slave, datagram, 0x1c12, 0x00, &slave->sm_info[EC_SM_INDEX_PROCESS_DATA_OUTPUT].pdo_assign, sizeof(ec_pdo_assign_t), &size, true);
-    if (ret < 0) {
-        EC_SLAVE_LOG_ERR("Failed to read RxPDO assignment on slave %u, err: %d\n", slave->index, ret);
-        return ret;
-    }
 
-    if (slave->sm_info[EC_SM_INDEX_PROCESS_DATA_OUTPUT].pdo_assign.count > CONFIG_EC_PER_SM_MAX_PDOS) {
-        EC_SLAVE_LOG_WRN("Slave %u has more RxPDOs (%u) than the master can handle (%u)\n",
-                         slave->index, slave->sm_info[EC_SM_INDEX_PROCESS_DATA_OUTPUT].pdo_assign.count, CONFIG_EC_PER_SM_MAX_PDOS);
-        slave->sm_info[EC_SM_INDEX_PROCESS_DATA_OUTPUT].pdo_assign.count = CONFIG_EC_PER_SM_MAX_PDOS;
-    }
+    if (slave->config) {
+        uint32_t data;
 
-    ret = ec_coe_upload(slave, datagram, 0x1c13, 0x00, &slave->sm_info[EC_SM_INDEX_PROCESS_DATA_INPUT].pdo_assign, sizeof(ec_pdo_assign_t), &size, true);
-    if (ret < 0) {
-        EC_SLAVE_LOG_ERR("Failed to read TxPDO assignment on slave %u, err: %d\n", slave->index, ret);
-        return ret;
-    }
-
-    if (slave->sm_info[EC_SM_INDEX_PROCESS_DATA_INPUT].pdo_assign.count > CONFIG_EC_PER_SM_MAX_PDOS) {
-        EC_SLAVE_LOG_WRN("Slave %u has more TxPDOs (%u) than the master can handle (%u)\n",
-                         slave->index, slave->sm_info[EC_SM_INDEX_PROCESS_DATA_INPUT].pdo_assign, CONFIG_EC_PER_SM_MAX_PDOS);
-        slave->sm_info[EC_SM_INDEX_PROCESS_DATA_INPUT].pdo_assign.count = CONFIG_EC_PER_SM_MAX_PDOS;
-    }
-
-    for (uint8_t i = 0; i < slave->sm_info[EC_SM_INDEX_PROCESS_DATA_OUTPUT].pdo_assign.count; i++) {
-        ret = ec_coe_upload(slave, datagram, slave->sm_info[EC_SM_INDEX_PROCESS_DATA_OUTPUT].pdo_assign.entry[i], 0x00, &slave->sm_info[EC_SM_INDEX_PROCESS_DATA_OUTPUT].pdo_mapping, sizeof(ec_pdo_mapping_t) * CONFIG_EC_PER_SM_MAX_PDOS, &size, true);
+        /* Config PDO assignments for 0x1c12, 0x1c13
+         *
+         * Clear existing assignments first
+         * Reassign all entries
+         * Set number of assigned entries
+        */
+        data = 0;
+        ret = ec_coe_download(slave, datagram, 0x1c12, 0x00, &data, 2, false);
         if (ret < 0) {
-            EC_SLAVE_LOG_ERR("Failed to read RxPDO mapping 0x%04x on slave %u, err: %d\n", slave->sm_info[EC_SM_INDEX_PROCESS_DATA_OUTPUT].pdo_assign.entry[i], slave->index, ret);
             return ret;
+        }
+        ret = ec_coe_download(slave, datagram, 0x1c13, 0x00, &data, 2, false);
+        if (ret < 0) {
+            return ret;
+        }
+        for (uint32_t i = 0; i < slave->sm_info[EC_SM_INDEX_PROCESS_DATA_OUTPUT].pdo_assign.count; i++) {
+            data = slave->sm_info[EC_SM_INDEX_PROCESS_DATA_OUTPUT].pdo_assign.entry[i];
+            ret = ec_coe_download(slave, datagram, 0x1c12, 0x01 + i, &data, 2, false);
+            if (ret < 0) {
+                return ret;
+            }
+        }
+        for (uint32_t i = 0; i < slave->sm_info[EC_SM_INDEX_PROCESS_DATA_INPUT].pdo_assign.count; i++) {
+            data = slave->sm_info[EC_SM_INDEX_PROCESS_DATA_INPUT].pdo_assign.entry[i];
+            ret = ec_coe_download(slave, datagram, 0x1c13, 0x01 + i, &data, 2, false);
+            if (ret < 0) {
+                return ret;
+            }
+        }
+        data = slave->sm_info[EC_SM_INDEX_PROCESS_DATA_OUTPUT].pdo_assign.count;
+        ret = ec_coe_download(slave, datagram, 0x1c12, 0x00, &data, 2, false);
+        if (ret < 0) {
+            return ret;
+        }
+        data = slave->sm_info[EC_SM_INDEX_PROCESS_DATA_INPUT].pdo_assign.count;
+        ret = ec_coe_download(slave, datagram, 0x1c13, 0x00, &data, 2, false);
+        if (ret < 0) {
+            return ret;
+        }
+
+        /* Config PDO mappings
+         *
+         * Clear existing mappings first
+         * Remap all entries
+         * Set number of mapped entries
+        */
+        if (slave->sii.general.coe_details.enable_pdo_configuration) {
+            for (uint32_t i = 0; i < slave->sm_info[EC_SM_INDEX_PROCESS_DATA_OUTPUT].pdo_assign.count; i++) {
+                data = 0;
+                ret = ec_coe_download(slave, datagram, slave->sm_info[EC_SM_INDEX_PROCESS_DATA_OUTPUT].pdo_assign.entry[i], 0x00, &data, 1, false);
+                if (ret < 0) {
+                    return ret;
+                }
+
+                for (uint32_t j = 0; j < slave->sm_info[EC_SM_INDEX_PROCESS_DATA_OUTPUT].pdo_mapping[i].count; j++) {
+                    data = slave->sm_info[EC_SM_INDEX_PROCESS_DATA_OUTPUT].pdo_mapping[i].entry[j];
+                    ret = ec_coe_download(slave, datagram, slave->sm_info[EC_SM_INDEX_PROCESS_DATA_OUTPUT].pdo_assign.entry[i], 0x01 + j, &data, 4, false);
+                    if (ret < 0) {
+                        return ret;
+                    }
+                }
+
+                data = slave->sm_info[EC_SM_INDEX_PROCESS_DATA_OUTPUT].pdo_mapping[i].count;
+                ret = ec_coe_download(slave, datagram, slave->sm_info[EC_SM_INDEX_PROCESS_DATA_OUTPUT].pdo_assign.entry[i], 0x00, &data, 1, false);
+                if (ret < 0) {
+                    return ret;
+                }
+            }
+
+            for (uint32_t i = 0; i < slave->sm_info[EC_SM_INDEX_PROCESS_DATA_INPUT].pdo_assign.count; i++) {
+                data = 0;
+                ret = ec_coe_download(slave, datagram, slave->sm_info[EC_SM_INDEX_PROCESS_DATA_INPUT].pdo_assign.entry[i], 0x00, &data, 1, false);
+                if (ret < 0) {
+                    return ret;
+                }
+
+                for (uint32_t j = 0; j < slave->sm_info[EC_SM_INDEX_PROCESS_DATA_INPUT].pdo_mapping[i].count; j++) {
+                    data = slave->sm_info[EC_SM_INDEX_PROCESS_DATA_INPUT].pdo_mapping[i].entry[j];
+                    ret = ec_coe_download(slave, datagram, slave->sm_info[EC_SM_INDEX_PROCESS_DATA_INPUT].pdo_assign.entry[i], 0x01 + j, &data, 4, false);
+                    if (ret < 0) {
+                        return ret;
+                    }
+                }
+
+                data = slave->sm_info[EC_SM_INDEX_PROCESS_DATA_INPUT].pdo_mapping[i].count;
+                ret = ec_coe_download(slave, datagram, slave->sm_info[EC_SM_INDEX_PROCESS_DATA_INPUT].pdo_assign.entry[i], 0x00, &data, 1, false);
+                if (ret < 0) {
+                    return ret;
+                }
+            }
         }
     }
 
-    for (uint8_t i = 0; i < slave->sm_info[EC_SM_INDEX_PROCESS_DATA_INPUT].pdo_assign.count; i++) {
-        ret = ec_coe_upload(slave, datagram, slave->sm_info[EC_SM_INDEX_PROCESS_DATA_INPUT].pdo_assign.entry[i], 0x00, &slave->sm_info[EC_SM_INDEX_PROCESS_DATA_INPUT].pdo_mapping, sizeof(ec_pdo_mapping_t) * CONFIG_EC_PER_SM_MAX_PDOS, &size, true);
-        if (ret < 0) {
-            EC_SLAVE_LOG_ERR("Failed to read TxPDO mapping 0x%04x on slave %u, err: %d\n", slave->sm_info[EC_SM_INDEX_PROCESS_DATA_INPUT].pdo_assign.entry[i], slave->index, ret);
-            return ret;
-        }
-    }
-
-    EC_SLAVE_LOG_INFO("Scanning Slave %u PDO assignment and mapping success\n", slave->index);
-#endif
     // preop state done
     if (slave->current_state == slave->requested_state) {
         return 0;
