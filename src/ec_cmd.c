@@ -105,11 +105,11 @@ static void ec_master_cmd_show_help(void)
     EC_LOG_RAW("  states <state>                                 Request state for all slaves (hex)\n");
     EC_LOG_RAW("  states -p <idx> <state>                        Request state for slave <idx> (hex)\n");
     EC_LOG_RAW("  coe_read -p [idx] [index] [subindex]           Read SDO via CoE\n");
-    EC_LOG_RAW("  coe_write -p [idx] [index] [subindex] [value]  Write SDO via CoE\n");
+    EC_LOG_RAW("  coe_write -p [idx] [index] [subindex] [data]   Write SDO via CoE\n");
     EC_LOG_RAW("  pdo_read                                       Read process data\n");
     EC_LOG_RAW("  pdo_read -p [idx]                              Read slave <idx> process data\n");
-    EC_LOG_RAW("  pdo_write [offset] [data]                      Write process data with offset\n");
-    EC_LOG_RAW("  pdo_write -p [idx] [offset] [data]             Write slave <idx> process data with offset\n");
+    EC_LOG_RAW("  pdo_write [offset] [hex low...high]            Write hexarray with offset to pdo\n");
+    EC_LOG_RAW("  pdo_write -p [idx] [offset] [hex low...high]   Write slave <idx> hexarray with offset to pdo\n");
     EC_LOG_RAW("  sii_read -p [idx]                              Read SII\n");
     EC_LOG_RAW("  wc                                             Show master working counter\n");
 #ifdef CONFIG_EC_PERF_ENABLE
@@ -606,6 +606,59 @@ static void ec_cmd_slave_state_request(ec_master_t *master, uint32_t slave_idx, 
     slave->requested_state = state;
 }
 
+static int hex_char_to_num(char c)
+{
+    if (c >= '0' && c <= '9') {
+        return c - '0';
+    } else if (c >= 'a' && c <= 'f') {
+        return c - 'a' + 10;
+    } else if (c >= 'A' && c <= 'F') {
+        return c - 'A' + 10;
+    }
+    return -1;
+}
+
+static int parse_hex_string(const char *hex_str, uint8_t *output, uint32_t max_len)
+{
+    const char *ptr = hex_str;
+    uint32_t byte_count = 0;
+
+    if (strlen(hex_str) >= 2 && hex_str[0] == '0' &&
+        (hex_str[1] == 'x' || hex_str[1] == 'X')) {
+        ptr = hex_str + 2;
+    }
+
+    uint32_t str_len = strlen(ptr);
+    if (str_len % 2) {
+        EC_LOG_RAW("Hex string length must be even\n");
+        return -1;
+    }
+
+    while (*ptr && *(ptr + 1) && byte_count < max_len) {
+        int high = hex_char_to_num(*ptr);
+        int low = hex_char_to_num(*(ptr + 1));
+
+        if (high < 0 || low < 0) {
+            EC_LOG_RAW("Invalid hex character: %c%c\n", *ptr, *(ptr + 1));
+            return -1;
+        }
+
+        output[byte_count++] = (uint8_t)((high << 4) | low);
+        ptr += 2;
+    }
+
+    if (*ptr) {
+        if (byte_count >= max_len) {
+            EC_LOG_RAW("Hex string too long, maximum %u bytes\n", max_len);
+            return -1;
+        }
+        EC_LOG_RAW("Incomplete hex pair at end of string\n");
+        return -1;
+    }
+
+    return byte_count;
+}
+
 int ethercat(int argc, const char **argv)
 {
     if (global_cmd_master == NULL) {
@@ -796,7 +849,7 @@ int ethercat(int argc, const char **argv)
                 for (uint32_t i = 0; i < global_cmd_master->actual_pdo_size; i++) {
                     EC_LOG_RAW("%02x ", global_cmd_master->pdo_buffer[EC_NETDEV_MAIN][i]);
                 }
-                //fflush(stdout);
+                fflush(stdout);
                 if (count < 9) {
                     ec_osal_msleep(1000);
                 }
@@ -810,15 +863,15 @@ int ethercat(int argc, const char **argv)
                 EC_LOG_RAW("No slaves found\n");
                 return -1;
             }
-            uint8_t *buffer = ec_master_get_slave_domain(global_cmd_master, slave_idx);
-            uint32_t data_size = ec_master_get_slave_domain_size(global_cmd_master, slave_idx);
+            uint8_t *buffer = ec_master_get_slave_domain_input(global_cmd_master, slave_idx);
+            uint32_t data_size = ec_master_get_slave_domain_isize(global_cmd_master, slave_idx);
 
             for (uint32_t count = 0; count < 10; count++) {
                 EC_LOG_RAW("\r");
                 for (uint32_t i = 0; i < data_size; i++) {
                     EC_LOG_RAW("%02x ", buffer[i]);
                 }
-                //fflush(stdout);
+                fflush(stdout);
                 if (count < 9) {
                     ec_osal_msleep(1000);
                 }
@@ -828,7 +881,11 @@ int ethercat(int argc, const char **argv)
         } else {
         }
     } else if (argc >= 4 && strcmp(argv[1], "pdo_write") == 0) {
-        // ethercat pdo_write -p [slave_idx] [offset] [data]
+        // ethercat pdo_write -p [slave_idx] [offset] [hexdata]
+        uint8_t hexdata[256];
+        uint32_t offset;
+        int size;
+
         if (argc >= 6 && strcmp(argv[2], "-p") == 0) {
             uint32_t slave_idx = atoi(argv[3]);
             if (slave_idx >= global_cmd_master->slave_count) {
@@ -836,37 +893,36 @@ int ethercat(int argc, const char **argv)
                 return -1;
             }
 
-            uint32_t offset = strtol(argv[4], NULL, 16);
-            uint32_t data = strtol(argv[5], NULL, 16);
-            uint32_t size;
+            offset = strtol(argv[4], NULL, 16);
 
-            if (data < 0xff)
-                size = 1;
-            else if (data < 0xffff)
-                size = 2;
-            else
-                size = 4;
+            size = parse_hex_string(argv[5], hexdata, sizeof(hexdata));
+            if (size < 0) {
+                return -1;
+            }
 
-            uint8_t *buffer = ec_master_get_slave_domain(global_cmd_master, slave_idx);
-
-            ec_memcpy(&buffer[offset], &data, size);
-
+            uint8_t *buffer = ec_master_get_slave_domain_output(global_cmd_master, slave_idx);
+            if (buffer) {
+                EC_LOG_RAW("Slave %u pdo write offset 0x%04x, size %u\n",
+                           slave_idx, offset, size);
+                ec_memcpy(&buffer[offset], hexdata, size);
+            }
             return 0;
         } else {
-            uint32_t offset = strtol(argv[2], NULL, 16);
-            uint32_t data = strtol(argv[3], NULL, 16);
-            uint32_t size;
+            offset = strtol(argv[2], NULL, 16);
 
-            if (data < 0xff)
-                size = 1;
-            else if (data < 0xffff)
-                size = 2;
-            else
-                size = 4;
+            size = parse_hex_string(argv[3], hexdata, sizeof(hexdata));
+            if (size < 0) {
+                return -1;
+            }
+
+            EC_LOG_RAW("Slaves pdo write offset 0x%04x, size %u\n",
+                       offset, size);
 
             for (uint32_t slave_idx = 0; slave_idx < global_cmd_master->slave_count; slave_idx++) {
-                uint8_t *buffer = ec_master_get_slave_domain(global_cmd_master, slave_idx);
-                ec_memcpy(&buffer[offset], &data, size);
+                uint8_t *buffer = ec_master_get_slave_domain_output(global_cmd_master, slave_idx);
+                if (buffer) {
+                    ec_memcpy(&buffer[offset], hexdata, size);
+                }
             }
             return 0;
         }
