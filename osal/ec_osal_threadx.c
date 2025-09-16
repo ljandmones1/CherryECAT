@@ -76,7 +76,7 @@ void ec_osal_thread_resume(ec_osal_thread_t thread)
     tx_thread_resume((TX_THREAD *)thread);
 }
 
-ec_osal_sem_t ec_osal_sem_create(uint32_t initial_count)
+ec_osal_sem_t ec_osal_sem_create(uint32_t max_count, uint32_t initial_count)
 {
     TX_SEMAPHORE *sem_ptr = TX_NULL;
 
