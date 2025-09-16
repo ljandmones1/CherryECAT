@@ -636,8 +636,8 @@ int ec_master_start(ec_master_t *master, uint32_t period_us)
     for (uint32_t i = 0; i < master->slave_count; i++) {
         master->slaves[i].requested_state = EC_SLAVE_STATE_OP;
         master->slaves[i].alstatus_code = 0;
+        master->slaves[i].force_update = true;
     }
-    master->config_change = true;
     master->active = true;
 
     ec_osal_mutex_give(master->scan_lock);

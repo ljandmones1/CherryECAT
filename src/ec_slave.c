@@ -684,6 +684,8 @@ static int ec_slave_config(ec_master_t *master, ec_slave_t *slave)
         uint32_t time_diff = EC_READ_U32(datagram->data) & 0x7fffffff;
         if (time_diff > EC_DC_MAX_SYNC_DIFF_NS) {
             if ((jiffies - start_time) > EC_DC_SYNC_WAIT_MS) {
+                EC_SLAVE_LOG_WRN("Slave %u DC time diff %u ns is too high, please increase your waitting time\n",
+                                 slave->index, time_diff);
                 return -EC_ERR_TIMEOUT;
             }
             goto read_check;

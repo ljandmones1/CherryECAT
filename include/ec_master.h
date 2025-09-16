@@ -86,7 +86,6 @@ typedef struct ec_master {
     ec_stats_t stats;
     ec_master_phase_t phase;
     bool active;        /**< Master is started. */
-    bool config_change; /**< Configuration changed and needs to be applied. */
     bool scan_done;     /**< Slave scan is done. */
 
     ec_datagram_t main_datagram; /**< Main datagram for slave scan & state change & config & sii */
