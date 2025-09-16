@@ -26,6 +26,7 @@ CherryECAT is a tiny and beautiful, high real-time and low-jitter EtherCAT maste
 - Support multi master
 - Support backup redundancy
 - Minimum PDO cyclic time < 40 us (depends on master and slave hardware)
+- Support multi cyclic time(every slave can use different proportional cyclic time)
 - Support ethercat cmd with shell, ref to IgH
 
 ## Hardware limitations
