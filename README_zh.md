@@ -12,6 +12,7 @@ CherryECAT 是一个小而美的、高实时性、低抖动的 EtherCAT 主机�
 
 - ~ 4K ram，~32K flash（24K + 8K shell cmd + debug log）
 - 异步队列式传输（一次传输可以携带多个 datagram）
+- 零拷贝技术：直接使用 enet tx/rx buffer 填充和解析 ethercat 数据
 - 支持热插拔
 	- 自动扫描总线
 	- 拓扑结构发生变化时自动更新 Slave 信息
@@ -45,10 +46,13 @@ CherryECAT 是一个小而美的、高实时性、低抖动的 EtherCAT 主机�
 ## Shell 命令
 
 ![ethercat](docs/assets/ethercat.png)
+![ethercat](docs/assets/ethercat1.png)
 ![ethercat](docs/assets/ethercat2.png)
 ![ethercat](docs/assets/ethercat3.png)
 ![ethercat](docs/assets/ethercat4.png)
 ![ethercat](docs/assets/ethercat5.png)
+![ethercat](docs/assets/ethercat6.png)
+![ethercat](docs/assets/ethercat7.png)
 
 ## 支持的开发板
 

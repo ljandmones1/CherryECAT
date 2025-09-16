@@ -11,4 +11,7 @@ CherryEC 是一个小而美的、高实时性、低抖动 EtherCAT 主机协议�
 .. toctree::
    :maxdepth: 1
 
+   quickstart
+   api
    ethercat
+   version
