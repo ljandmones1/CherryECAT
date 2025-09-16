@@ -125,6 +125,10 @@ int ec_master_start(ec_master_t *master, uint32_t period_us);
 int ec_master_stop(ec_master_t *master);
 int ec_master_queue_ext_datagram(ec_master_t *master, ec_datagram_t *datagram, bool wakep_poll, bool waiter);
 uint8_t *ec_master_get_slave_domain(ec_master_t *master, uint32_t slave_index);
+uint8_t *ec_master_get_slave_domain_output(ec_master_t *master, uint32_t slave_index);
+uint8_t *ec_master_get_slave_domain_input(ec_master_t *master, uint32_t slave_index);
 uint32_t ec_master_get_slave_domain_size(ec_master_t *master, uint32_t slave_index);
+uint32_t ec_master_get_slave_domain_osize(ec_master_t *master, uint32_t slave_index);
+uint32_t ec_master_get_slave_domain_isize(ec_master_t *master, uint32_t slave_index);
 
 #endif

@@ -301,9 +301,12 @@ EC_FAST_CODE_SECTION void ec_master_receive_datagrams(ec_master_t *master,
             datagram->type != EC_DATAGRAM_FPWR &&
             datagram->type != EC_DATAGRAM_BWR &&
             datagram->type != EC_DATAGRAM_LWR) {
-            // copy received data into the datagram memory,
-            // if something has been read
-            ec_memcpy(datagram->data, cur_data, data_size);
+            // copy received data into the datagram memory, only copy the read part, do not modify the write part
+            if (datagram->type == EC_DATAGRAM_LRW) {
+                ec_memcpy(datagram->data + datagram->lrw_read_offset, cur_data + datagram->lrw_read_offset, datagram->lrw_read_size);
+            } else {
+                ec_memcpy(datagram->data, cur_data, data_size);
+            }
         }
         cur_data += data_size;
 
@@ -541,7 +544,8 @@ int ec_master_start(ec_master_t *master, uint32_t period_us)
         EC_ASSERT_MSG(slave->config != NULL, "Slave %u has no configuration\n", slave_idx);
 
         slave->logical_start_address = master->actual_pdo_size;
-        slave->data_size = 0;
+        slave->odata_size = 0;
+        slave->idata_size = 0;
         for (uint8_t i = 0; i < slave->config->sync_count; i++) {
             bitlen = 0;
 
@@ -576,13 +580,14 @@ int ec_master_start(ec_master_t *master, uint32_t period_us)
             slave->sm_info[sm_idx].fmmu.dir = slave->config->sync[i].dir;
             slave->sm_info[sm_idx].fmmu_enable = true;
             master->actual_pdo_size += (bitlen + 7) / 8;
-            slave->data_size += (bitlen + 7) / 8;
 
             if (slave->config->sync[i].dir == EC_DIR_INPUT) {
                 used[EC_DIR_INPUT] = true;
+                slave->idata_size += (bitlen + 7) / 8;
             }
             if (slave->config->sync[i].dir == EC_DIR_OUTPUT) {
                 used[EC_DIR_OUTPUT] = true;
+                slave->odata_size += (bitlen + 7) / 8;
             }
         }
 
@@ -595,17 +600,20 @@ int ec_master_start(ec_master_t *master, uint32_t period_us)
         memset(cyclic_datagram, 0, sizeof(ec_cyclic_datagram_t));
 
         for (netdev_idx = EC_NETDEV_MAIN; netdev_idx < CONFIG_EC_MAX_NETDEVS; netdev_idx++) {
-            ec_datagram_init_static(&cyclic_datagram->datagrams[netdev_idx], &master->pdo_buffer[netdev_idx][slave->logical_start_address], slave->data_size);
+            ec_datagram_init_static(&cyclic_datagram->datagrams[netdev_idx], &master->pdo_buffer[netdev_idx][slave->logical_start_address],
+                                    slave->odata_size + slave->idata_size);
             cyclic_datagram->datagrams[netdev_idx].netdev_idx = netdev_idx;
 
-            if (used[EC_DIR_INPUT] && used[EC_DIR_INPUT]) {
-                ec_datagram_lrw(&cyclic_datagram->datagrams[netdev_idx], slave->logical_start_address, slave->data_size);
+            if (used[EC_DIR_OUTPUT] && used[EC_DIR_INPUT]) {
+                ec_datagram_lrw(&cyclic_datagram->datagrams[netdev_idx], slave->logical_start_address, slave->odata_size + slave->idata_size);
+                cyclic_datagram->datagrams[netdev_idx].lrw_read_offset = slave->odata_size;
+                cyclic_datagram->datagrams[netdev_idx].lrw_read_size = slave->idata_size;
                 cyclic_datagram->expected_working_counter = 3;
             } else if (used[EC_DIR_INPUT]) {
-                ec_datagram_lrd(&cyclic_datagram->datagrams[netdev_idx], slave->logical_start_address, slave->data_size);
+                ec_datagram_lrd(&cyclic_datagram->datagrams[netdev_idx], slave->logical_start_address, slave->idata_size);
                 cyclic_datagram->expected_working_counter = 1;
             } else if (used[EC_DIR_OUTPUT]) {
-                ec_datagram_lwr(&cyclic_datagram->datagrams[netdev_idx], slave->logical_start_address, slave->data_size);
+                ec_datagram_lwr(&cyclic_datagram->datagrams[netdev_idx], slave->logical_start_address, slave->odata_size);
                 cyclic_datagram->expected_working_counter = 1;
             }
             ec_datagram_zero(&cyclic_datagram->datagrams[netdev_idx]);
@@ -613,9 +621,9 @@ int ec_master_start(ec_master_t *master, uint32_t period_us)
         slave->expected_working_counter = cyclic_datagram->expected_working_counter;
         master->expected_working_counter += slave->expected_working_counter;
 
-        EC_SLAVE_LOG_INFO("Slave %u: Logical address 0x%08x, %u byte, expected working counter %u\n",
+        EC_SLAVE_LOG_INFO("Slave %u: Logical address 0x%08x, obyte %u, ibyte %u expected working counter %u\n",
                           slave->index,
-                          slave->logical_start_address, slave->data_size,
+                          slave->logical_start_address, slave->odata_size, slave->idata_size,
                           slave->expected_working_counter);
 
         ec_dlist_add_tail(&master->cyclic_datagram_queue, &cyclic_datagram->queue);
@@ -718,11 +726,43 @@ uint8_t *ec_master_get_slave_domain(ec_master_t *master, uint32_t slave_index)
     }
 
     slave = &master->slaves[slave_index];
-    if (slave->data_size == 0) {
+    if ((slave->odata_size + slave->idata_size) == 0) {
         return NULL;
     }
 
     return &master->pdo_buffer[EC_NETDEV_MAIN][slave->logical_start_address];
+}
+
+uint8_t *ec_master_get_slave_domain_output(ec_master_t *master, uint32_t slave_index)
+{
+    ec_slave_t *slave;
+
+    if (slave_index >= master->slave_count) {
+        return NULL;
+    }
+
+    slave = &master->slaves[slave_index];
+    if (slave->odata_size == 0) {
+        return NULL;
+    }
+
+    return &master->pdo_buffer[EC_NETDEV_MAIN][slave->logical_start_address];
+}
+
+uint8_t *ec_master_get_slave_domain_input(ec_master_t *master, uint32_t slave_index)
+{
+    ec_slave_t *slave;
+
+    if (slave_index >= master->slave_count) {
+        return NULL;
+    }
+
+    slave = &master->slaves[slave_index];
+    if (slave->idata_size == 0) {
+        return NULL;
+    }
+
+    return &master->pdo_buffer[EC_NETDEV_MAIN][slave->logical_start_address + slave->idata_size];
 }
 
 uint32_t ec_master_get_slave_domain_size(ec_master_t *master, uint32_t slave_index)
@@ -735,7 +775,33 @@ uint32_t ec_master_get_slave_domain_size(ec_master_t *master, uint32_t slave_ind
 
     slave = &master->slaves[slave_index];
 
-    return slave->data_size;
+    return (slave->odata_size + slave->idata_size);
+}
+
+uint32_t ec_master_get_slave_domain_osize(ec_master_t *master, uint32_t slave_index)
+{
+    ec_slave_t *slave;
+
+    if (slave_index >= master->slave_count) {
+        return 0;
+    }
+
+    slave = &master->slaves[slave_index];
+
+    return slave->odata_size;
+}
+
+uint32_t ec_master_get_slave_domain_isize(ec_master_t *master, uint32_t slave_index)
+{
+    ec_slave_t *slave;
+
+    if (slave_index >= master->slave_count) {
+        return 0;
+    }
+
+    slave = &master->slaves[slave_index];
+
+    return slave->idata_size;
 }
 
 EC_FAST_CODE_SECTION static void ec_master_cyclic_process(void *arg)

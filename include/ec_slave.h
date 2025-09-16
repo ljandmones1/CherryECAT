@@ -92,7 +92,8 @@ typedef struct ec_slave {
     uint32_t transmission_delay;       /**< DC system time transmission delay (offset from reference clock). */
 
     uint32_t logical_start_address;
-    uint32_t data_size;
+    uint32_t odata_size;
+    uint32_t idata_size;
     uint32_t expected_working_counter;
 
     uint16_t *sii_image; /**< Complete SII image. */
