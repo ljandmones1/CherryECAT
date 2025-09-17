@@ -10,11 +10,11 @@
  * Wait for DC time difference to drop under this absolute value before
  * requesting SAFEOP.
  */
-#define EC_DC_MAX_SYNC_DIFF_NS 1000
+#define EC_DC_MAX_SYNC_DIFF_NS 100
 
-/** Maximum time (in ms) to wait for clock discipline.
+/** Maximum count to wait for clock discipline.
  */
-#define EC_DC_SYNC_WAIT_MS     (5000 * 1000)
+#define EC_DC_SYNC_WATI_COUNT  (15000)
 
 /** Time offset (in ns), that is added to cyclic start time.
  */
@@ -313,13 +313,17 @@ repeat_check:
     slave->current_state = EC_READ_U8(datagram->data);
 
     if (!(slave->current_state & EC_SLAVE_STATE_ACK_ERR)) {
-        EC_SLAVE_LOG_ERR("Slave %u acked state %s, alstatus code: 0x%04x (%s)\n",
-                         slave->index,
-                         ec_state_string(slave->current_state, 0),
-                         status_code,
-                         ec_alstatus_string(status_code));
+        if (slave->current_state == slave->requested_state) {
+            return 0;
+        } else {
+            EC_SLAVE_LOG_ERR("Slave %u acked state %s, alstatus code: 0x%04x (%s)\n",
+                             slave->index,
+                             ec_state_string(slave->current_state, 0),
+                             status_code,
+                             ec_alstatus_string(status_code));
 
-        return -EC_ERR_ALERR;
+            return -EC_ERR_ALERR;
+        }
     } else {
         if ((jiffies - start_time) > ec_slave_state_change_timeout_us(slave->current_state, requested_state)) {
             return -EC_ERR_TIMEOUT;
@@ -671,7 +675,7 @@ static int ec_slave_config(ec_master_t *master, ec_slave_t *slave)
             return ret;
         }
 
-        start_time = jiffies;
+        start_time = 0;
     read_check:
         ec_datagram_fprd(datagram, slave->station_address, ESCREG_OF(ESCREG->SYS_TIME_DIFF), 4);
         ec_datagram_zero(datagram);
@@ -683,9 +687,10 @@ static int ec_slave_config(ec_master_t *master, ec_slave_t *slave)
 
         uint32_t time_diff = EC_READ_U32(datagram->data) & 0x7fffffff;
         if (time_diff > EC_DC_MAX_SYNC_DIFF_NS) {
-            if ((jiffies - start_time) > EC_DC_SYNC_WAIT_MS) {
-                EC_SLAVE_LOG_WRN("Slave %u DC time diff %u ns is too high, please increase your waitting time\n",
-                                 slave->index, time_diff);
+            start_time++;
+            if (start_time > EC_DC_SYNC_WATI_COUNT) {
+                EC_SLAVE_LOG_ERR("Slave %u DC time diff sync failed\n",
+                                 slave->index);
                 return -EC_ERR_TIMEOUT;
             }
             goto read_check;
@@ -1289,7 +1294,7 @@ void ec_slaves_scanning(ec_master_t *master)
         ec_master_calc_dc(master);
     }
 
-    if (master->slave_count) {
+    if (master->slave_count && master->scan_done) {
         ec_master_scan_slaves_state(master);
     }
 }
