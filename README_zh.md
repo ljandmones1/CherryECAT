@@ -4,6 +4,7 @@
 <p align="center">
 	<a href="https://github.com/cherry-embedded/CherryECAT/releases"><img src="https://img.shields.io/github/release/cherry-embedded/CherryECAT.svg"></a>
 	<a href="https://github.com/cherry-embedded/CherryECAT/blob/master/LICENSE"><img src="https://img.shields.io/github/license/cherry-embedded/CherryECAT.svg?style=flat-square"></a>
+	<a href="https://github.com/cherry-embedded/CherryECAT/actions/workflows/build_demo.yml"><img src="https://github.com/cherry-embedded/CherryECAT/actions/workflows/build_demo.yml/badge.svg"> </a>
 </p>
 
 CherryECAT 是一个小而美的、高实时性、低抖动的 EtherCAT 主机协议栈，专为跑在 RTOS 下的 MCU 设计。

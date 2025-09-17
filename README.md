@@ -4,6 +4,7 @@
 <p align="center">
 	<a href="https://github.com/cherry-embedded/CherryECAT/releases"><img src="https://img.shields.io/github/release/cherry-embedded/CherryECAT.svg"></a>
 	<a href="https://github.com/cherry-embedded/CherryECAT/blob/master/LICENSE"><img src="https://img.shields.io/github/license/cherry-embedded/CherryECAT.svg?style=flat-square"></a>
+	<a href="https://github.com/cherry-embedded/CherryECAT/actions/workflows/build_demo.yml"><img src="https://github.com/cherry-embedded/CherryECAT/actions/workflows/build_demo.yml/badge.svg"> </a>
 </p>
 
 CherryECAT is a tiny and beautiful, high real-time and low-jitter EtherCAT master stack, specially designed for MCUs running with RTOS.
