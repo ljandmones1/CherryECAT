@@ -85,8 +85,8 @@ typedef struct ec_master {
     ec_netdev_stats_t netdev_stats;
     ec_stats_t stats;
     ec_master_phase_t phase;
-    bool active;        /**< Master is started. */
-    bool scan_done;     /**< Slave scan is done. */
+    bool active;    /**< Master is started. */
+    bool scan_done; /**< Slave scan is done. */
 
     ec_datagram_t main_datagram; /**< Main datagram for slave scan & state change & config & sii */
 
@@ -95,9 +95,19 @@ typedef struct ec_master {
     ec_dlist_t cyclic_datagram_queue; /**< Queue of cyclic datagrams(internal use)*/
     uint8_t datagram_index;
 
-    ec_slave_t *dc_ref_clock;           /**< DC reference clock slave. */
-    ec_datagram_t dc_ref_sync_datagram; /**< Datagram used for synchronizing the reference clock to the master clock. */
-    ec_datagram_t dc_all_sync_datagram; /**< Datagram used for synchronizing all slaves to the master clock. */
+    ec_slave_t *dc_ref_clock;                /**< DC reference clock slave. */
+    ec_datagram_t dc_ref_sync_datagram;      /**< Datagram used for synchronizing the reference clock to the master clock. */
+    ec_datagram_t dc_all_sync_datagram;      /**< Datagram used for synchronizing all slaves to the master clock. */
+    ec_datagram_t systime_diff_mon_datagram; /**< Datagram used for reading the system time difference between master and reference clock. */
+
+    uint32_t min_systime_diff;
+    uint32_t max_systime_diff;
+    uint32_t curr_systime_diff;
+    uint32_t systime_diff_count;
+    uint64_t total_systime_diff;
+    bool systime_diff_enable;
+
+    uint64_t interval;
 
     ec_slave_t *slaves;
     uint32_t slave_count;

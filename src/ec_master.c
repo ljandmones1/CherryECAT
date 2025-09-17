@@ -478,6 +478,9 @@ int ec_master_init(ec_master_t *master, uint8_t master_index)
     ec_datagram_init(&master->main_datagram, EC_MAX_DATA_SIZE);
     ec_datagram_init(&master->dc_ref_sync_datagram, 8);
     ec_datagram_init(&master->dc_all_sync_datagram, 8);
+    ec_datagram_init(&master->systime_diff_mon_datagram, 4);
+
+    ec_datagram_brd(&master->systime_diff_mon_datagram, ESCREG_OF(ESCREG->SYS_TIME_DIFF), 4);
 
     master->scan_lock = ec_osal_mutex_create();
     if (!master->scan_lock) {
@@ -537,6 +540,8 @@ int ec_master_start(ec_master_t *master, uint32_t period_us)
     master->expected_working_counter = 0;
     master->actual_pdo_size = 0;
     master->phase = EC_OPERATION;
+    master->interval = 0;
+    master->systime_diff_enable = false;
 
     for (uint32_t slave_idx = 0; slave_idx < master->slave_count; slave_idx++) {
         slave = &master->slaves[slave_idx];
@@ -814,10 +819,31 @@ EC_FAST_CODE_SECTION static void ec_master_cyclic_process(void *arg)
         return;
     }
 
+    ec_master_receive(master);
+
 #ifdef CONFIG_EC_PERF_ENABLE
     ec_perf_polling(&master->perf);
 #endif
-    ec_master_receive(master);
+    if (master->systime_diff_enable) {
+        if (master->systime_diff_mon_datagram.state == EC_DATAGRAM_RECEIVED) {
+            master->curr_systime_diff = EC_READ_U32(master->systime_diff_mon_datagram.data) & 0x7fffffff;
+
+            if (master->curr_systime_diff < master->min_systime_diff) {
+                master->min_systime_diff = master->curr_systime_diff;
+            }
+
+            if (master->curr_systime_diff > master->max_systime_diff) {
+                master->max_systime_diff = master->curr_systime_diff;
+            }
+            master->systime_diff_count++;
+            master->total_systime_diff += master->curr_systime_diff;
+        }
+
+        if ((master->interval % 10) == 0) {
+            ec_datagram_zero(&master->systime_diff_mon_datagram);
+            ec_master_queue_datagram(master, &master->systime_diff_mon_datagram);
+        }
+    }
 
     master->actual_working_counter = 0;
     ec_dlist_for_each_entry_safe(cyclic_datagram, n, &master->cyclic_datagram_queue, queue)
@@ -846,4 +872,6 @@ EC_FAST_CODE_SECTION static void ec_master_cyclic_process(void *arg)
     }
 
     ec_master_send(master);
+
+    master->interval++;
 }
