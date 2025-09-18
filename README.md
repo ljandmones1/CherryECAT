@@ -56,6 +56,46 @@ CherryECAT is a tiny and beautiful, high real-time and low-jitter EtherCAT maste
 ![ethercat](docs/assets/ethercat6.png)
 ![ethercat](docs/assets/ethercat7.png)
 
+## Tool
+
+- esi_parser
+
+Use **esi_parser.py** to generate slave eeprom information and download eeprom to slave.
+
+```
+python ./esi_parser.py ECAT_CIA402_ESI.xml eeprom.bin eeprom.h
+
+Parsing XML file: ECAT_CIA402_ESI.xml
+Parsed XML: Vendor=0x0048504D, Product=0x00000003
+Device Name: ECAT_CIA402
+Mailbox RX: 0x1000(128)
+Mailbox TX: 0x1080(128)
+Generating EEPROM data...
+✓ Successfully converted 'ECAT_CIA402_ESI.xml' to 'eeprom.bin'
+✓ Generated 2048 bytes of EEPROM data
+✓ Vendor ID: 0x0048504D
+✓ Product Code: 0x00000003
+✓ Revision: 0x00000001
+✓ Device Name: ECAT_CIA402
+✓ Generated C header file: eeprom.h
+```
+
+- eni_parser
+
+Use **eni_parser.py** to generate CherryECAT slave sync config.
+
+```
+python ./eni_parser.py ECAT_CIA402_ENI.xml sync_config.h
+
+Parsing ENI file: ECAT_CIA402_ENI.xml
+Generating C code...
+✓ Successfully converted 'ECAT_CIA402_ENI.xml' to 'sync_config.h'
+✓ Generated C code for 1 slave(s)
+✓ Slave 1:
+  - RxPDO 0x1602: 3 entries
+  - TxPDO 0x1A02: 3 entries
+```
+
 ## Support Boards
 
 - HPM6750EVK2/HPM6800EVK/**HPM5E00EVK**(hybrid internal)

@@ -138,7 +138,7 @@ int ec_sii_read(ec_slave_t *slave, ec_datagram_t *datagram, uint16_t woffset, ui
     return esc_sii_assign_pdi(slave, datagram);
 }
 
-int esc_sii_write(ec_slave_t *slave, ec_datagram_t *datagram, uint16_t woffset, const uint16_t *buf, uint32_t len)
+int ec_sii_write(ec_slave_t *slave, ec_datagram_t *datagram, uint16_t woffset, const uint16_t *buf, uint32_t len)
 {
     int ret;
 

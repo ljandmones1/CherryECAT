@@ -834,6 +834,25 @@ int ethercat(int argc, const char **argv)
                    global_cmd_master->slaves[slave_idx].sii_nwords * 2);
 
         return 0;
+    } else if (argc >= 5 && strcmp(argv[1], "sii_write") == 0) {
+        // ethercat sii_write -p [slave_idx]
+        uint32_t slave_idx = atoi(argv[3]);
+        if (slave_idx >= global_cmd_master->slave_count) {
+            EC_LOG_RAW("No slaves found\n");
+            return -1;
+        }
+        static ec_datagram_t datagram;
+
+        ec_datagram_init(&datagram, 4096);
+
+        extern unsigned char cherryecat_eepromdata[2048];
+
+        ec_osal_mutex_take(global_cmd_master->scan_lock);
+        ec_sii_write(&global_cmd_master->slaves[slave_idx], &datagram, 0x0000, (const uint16_t *)cherryecat_eepromdata, sizeof(cherryecat_eepromdata));
+        ec_osal_mutex_give(global_cmd_master->scan_lock);
+
+        ec_datagram_clear(&datagram);
+        return 0;
     } else if (argc >= 2 && strcmp(argv[1], "pdo_read") == 0) {
         // ethercat pdo_read
         if (argc == 2) {

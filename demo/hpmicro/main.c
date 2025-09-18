@@ -100,6 +100,8 @@ static void task_start(void *param)
 
 CSH_CMD_EXPORT(ethercat, );
 
+unsigned char cherryecat_eepromdata[2048]; // EEPROM data buffer, please generate by esi_parse.py
+
 static ec_pdo_entry_info_t dio_1600[] = {
     { 0x6000, 0x00, 0x20 },
 };
