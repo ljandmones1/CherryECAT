@@ -26,6 +26,9 @@ if(NOT (HPM_BUILD_TYPE STREQUAL "ram"))
 message(FATAL_ERROR "Only support ram build for demo")
 endif()
 
+#Set CONFIG_FREERTOS_TIMER_RESOURCE_GPTMR to use GPTMR as system's tick source
+#set(CONFIG_FREERTOS_TIMER_RESOURCE_GPTMR 1)
+
 find_package(hpm-sdk REQUIRED HINTS $ENV{HPM_SDK_BASE})
 
 project(cherryec)

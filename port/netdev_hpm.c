@@ -381,10 +381,10 @@ SDK_DECLARE_EXT_ISR_M(IRQn_ENET1, isr_enet1)
 
 #include "hpm_gptmr_drv.h"
 
-#define EC_HTIMER          (HPM_GPTMR2)
-#define EC_HTIMER_CH       0
-#define EC_HTIMER_IRQ      IRQn_GPTMR2
-#define EC_HTIMER_CLK_NAME (clock_gptmr2)
+#define EC_HTIMER          BOARD_GPTMR
+#define EC_HTIMER_CH       BOARD_GPTMR_CHANNEL
+#define EC_HTIMER_IRQ      BOARD_GPTMR_IRQ
+#define EC_HTIMER_CLK_NAME BOARD_GPTMR_CLK_NAME
 
 ec_htimer_cb g_ec_htimer_cb = NULL;
 void *g_ec_htimer_arg = NULL;
