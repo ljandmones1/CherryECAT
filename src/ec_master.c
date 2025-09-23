@@ -5,7 +5,7 @@
  */
 #include "ec_master.h"
 
-#define EC_DATAGRAM_TIMEOUT_MS (50 * 1000)
+#define EC_DATAGRAM_TIMEOUT_US (50 * 1000) // 50ms
 
 static void ec_master_cyclic_process(void *arg);
 
@@ -377,7 +377,7 @@ EC_FAST_CODE_SECTION static void ec_master_receive(ec_master_t *master)
         if (datagram->state != EC_DATAGRAM_SENT)
             continue;
 
-        if ((jiffies - datagram->jiffies_sent) > EC_DATAGRAM_TIMEOUT_MS) {
+        if ((jiffies - datagram->jiffies_sent) > EC_DATAGRAM_TIMEOUT_US) {
             datagram->state = EC_DATAGRAM_TIMED_OUT;
             ec_master_unqueue_datagram(master, datagram);
             master->stats.timeouts++;

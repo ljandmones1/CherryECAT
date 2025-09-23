@@ -26,7 +26,7 @@ int ec_mailbox_send(ec_slave_t *slave, ec_datagram_t *datagram)
     return ec_master_queue_ext_datagram(slave->master, datagram, true, true);
 }
 
-int ec_mailbox_read_status(ec_slave_t *slave, ec_datagram_t *datagram)
+int ec_mailbox_read_status(ec_slave_t *slave, ec_datagram_t *datagram, uint32_t timeout_us)
 {
     uint32_t start_time;
     int ret;
@@ -43,7 +43,7 @@ check_again:
     }
 
     if (!(EC_READ_U8(datagram->data + 5) & ESC_SYNCM_STATUS_MBX_MODE_MASK)) {
-        if ((jiffies - start_time) > EC_MBOX_READ_TIMEOUT) {
+        if ((jiffies - start_time) > timeout_us) {
             return -EC_ERR_TIMEOUT;
         }
         goto check_again;
@@ -52,14 +52,14 @@ check_again:
     return 0;
 }
 
-int ec_mailbox_receive(ec_slave_t *slave, ec_datagram_t *datagram, uint8_t *type, uint32_t *size)
+int ec_mailbox_receive(ec_slave_t *slave, ec_datagram_t *datagram, uint8_t *type, uint32_t *size, uint32_t timeout_us)
 {
     uint16_t code;
     uint32_t tmp_size;
     uint8_t tmp_type;
     int ret;
 
-    ret = ec_mailbox_read_status(slave, datagram);
+    ret = ec_mailbox_read_status(slave, datagram, timeout_us);
     if (ret < 0) {
         return ret;
     }

@@ -8,6 +8,7 @@
 
 uint8_t *ec_mailbox_fill_send(ec_slave_t *slave, ec_datagram_t *datagram, uint8_t type, uint16_t size);
 int ec_mailbox_send(ec_slave_t *slave, ec_datagram_t *datagram);
-int ec_mailbox_receive(ec_slave_t *slave, ec_datagram_t *datagram, uint8_t *type, uint32_t *size);
+int ec_mailbox_read_status(ec_slave_t *slave, ec_datagram_t *datagram, uint32_t timeout_us);
+int ec_mailbox_receive(ec_slave_t *slave, ec_datagram_t *datagram, uint8_t *type, uint32_t *size, uint32_t timeout_us);
 
 #endif

@@ -41,6 +41,8 @@ typedef ec_coe_download_segment_header_t ec_coe_upload_segment_header_t;
  */
 #define EC_COE_DOWN_SEG_MIN_DATA_SIZE   7
 
+#define EC_COE_TIMEOUT_US          (1000 * 1000) /* 1s */
+
 static int ec_coe_download_expedited(ec_slave_t *slave,
                                      ec_datagram_t *datagram,
                                      uint16_t index,
@@ -77,7 +79,7 @@ static int ec_coe_download_expedited(ec_slave_t *slave,
         return ret;
     }
 
-    ret = ec_mailbox_receive(slave, datagram, &mbox_proto, &recv_size);
+    ret = ec_mailbox_receive(slave, datagram, &mbox_proto, &recv_size, EC_COE_TIMEOUT_US);
     if (ret < 0) {
         return ret;
     }
@@ -152,7 +154,7 @@ static int ec_coe_download_common(ec_slave_t *slave,
         return ret;
     }
 
-    ret = ec_mailbox_receive(slave, datagram, &mbox_proto, &recv_size);
+    ret = ec_mailbox_receive(slave, datagram, &mbox_proto, &recv_size, EC_COE_TIMEOUT_US);
     if (ret < 0) {
         return ret;
     }
@@ -227,7 +229,7 @@ static int ec_coe_download_segment(ec_slave_t *slave,
         return ret;
     }
 
-    ret = ec_mailbox_receive(slave, datagram, &mbox_proto, &recv_size);
+    ret = ec_mailbox_receive(slave, datagram, &mbox_proto, &recv_size, EC_COE_TIMEOUT_US);
     if (ret < 0) {
         return ret;
     }
@@ -360,7 +362,7 @@ int ec_coe_upload(ec_slave_t *slave,
         return ret;
     }
 
-    ret = ec_mailbox_receive(slave, datagram, &mbox_proto, &recv_size);
+    ret = ec_mailbox_receive(slave, datagram, &mbox_proto, &recv_size, EC_COE_TIMEOUT_US);
     if (ret < 0) {
         return ret;
     }
@@ -426,6 +428,10 @@ int ec_coe_upload(ec_slave_t *slave,
         total_size = EC_READ_U32(data + 6);
         offset = 0;
 
+        if (maxsize < total_size) {
+            return -EC_ERR_COE_SIZE;
+        }
+
         ec_memcpy(ptr, data + EC_COE_UP_REQ_HEADER_SIZE, data_size);
 
         ptr += data_size;
@@ -433,7 +439,7 @@ int ec_coe_upload(ec_slave_t *slave,
 
         toggle = false;
 
-        if (data_size < total_size) {
+        if (offset < total_size) {
             while (1) {
                 data = ec_mailbox_fill_send(slave, datagram, EC_MBOX_TYPE_COE, EC_COE_UP_REQ_HEADER_SIZE);
 
@@ -451,7 +457,7 @@ int ec_coe_upload(ec_slave_t *slave,
                     return ret;
                 }
 
-                ret = ec_mailbox_receive(slave, datagram, &mbox_proto, &recv_size);
+                ret = ec_mailbox_receive(slave, datagram, &mbox_proto, &recv_size, EC_COE_TIMEOUT_US);
                 if (ret < 0) {
                     return ret;
                 }
@@ -500,10 +506,6 @@ int ec_coe_upload(ec_slave_t *slave,
                         return -EC_ERR_COE_SIZE;
                     }
 
-                    if (maxsize < total_size) {
-                        return -EC_ERR_COE_SIZE;
-                    }
-
                     if (size) {
                         *size = total_size;
                     }
@@ -511,10 +513,6 @@ int ec_coe_upload(ec_slave_t *slave,
                 }
             }
         } else {
-            if (maxsize < total_size) {
-                return -EC_ERR_COE_SIZE;
-            }
-
             if (size) {
                 *size = total_size;
             }
