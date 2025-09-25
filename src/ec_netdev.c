@@ -86,11 +86,6 @@ ec_netdev_t *ec_netdev_init(uint8_t netdev_index)
     return netdev;
 }
 
-void ec_netdev_enable_irq(ec_netdev_t *netdev, bool enable)
-{
-    ec_netdev_low_level_enable_irq(netdev, enable);
-}
-
 bool ec_netdev_get_link_state(ec_netdev_t *netdev)
 {
     return ec_netdev_low_level_get_link_state(netdev);
@@ -127,17 +122,4 @@ EC_FAST_CODE_SECTION void ec_netdev_receive(ec_netdev_t *netdev, uint8_t *frame,
     netdev->master->netdev_stats.rx_bytes += size;
 
     ec_master_receive_datagrams(netdev->master, netdev->index, ec_data, ec_size);
-}
-
-EC_FAST_CODE_SECTION void ec_netdev_poll(ec_netdev_t *netdev)
-{
-    while (ec_netdev_low_level_input(netdev) == 0) {
-    }
-}
-
-void ec_netdev_trigger_poll(ec_netdev_t *netdev)
-{
-    if (netdev->master->nonperiod_sem) {
-        ec_osal_sem_give(netdev->master->nonperiod_sem);
-    }
 }

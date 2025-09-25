@@ -21,12 +21,12 @@
 
 #define __ENABLE_ENET_RECEIVE_INTERRUPT 1
 
-#define MAC_ADDR0          0x00
-#define MAC_ADDR1          0x80
-#define MAC_ADDR2          0xE1
-#define MAC_ADDR3          0x00
-#define MAC_ADDR4          0x00
-#define MAC_ADDR5          0x00
+#define MAC_ADDR0 0x00
+#define MAC_ADDR1 0x80
+#define MAC_ADDR2 0xE1
+#define MAC_ADDR3 0x00
+#define MAC_ADDR4 0x00
+#define MAC_ADDR5 0x00
 
 #define ENET_TX_BUFF_COUNT CONFIG_EC_MAX_ENET_TXBUF_COUNT
 #define ENET_RX_BUFF_COUNT CONFIG_EC_MAX_ENET_RXBUF_COUNT
@@ -135,6 +135,9 @@ hpm_stat_t enet_init(ENET_Type *ptr)
     enet_config.sarc = enet_sarc_replace_mac0;
 
 #if defined(__ENABLE_ENET_RECEIVE_INTERRUPT) && __ENABLE_ENET_RECEIVE_INTERRUPT
+    /* Enable Enet IRQ */
+    board_enable_enet_irq(ENET);
+
     /* Get the default interrupt config */
     enet_get_default_interrupt_config(ENET, &int_config);
 #endif
@@ -221,17 +224,6 @@ ec_netdev_t *ec_netdev_low_level_init(uint8_t netdev_index)
     }
 
     return &g_netdev;
-}
-
-void ec_netdev_low_level_enable_irq(ec_netdev_t *netdev, bool enable)
-{
-    if (enable) {
-        /* Enable Enet IRQ */
-        board_enable_enet_irq(ENET);
-    } else {
-        /* Disable Enet IRQ */
-        board_disable_enet_irq(ENET);
-    }
 }
 
 bool ec_netdev_low_level_get_link_state(ec_netdev_t *netdev)
@@ -353,7 +345,8 @@ void isr_enet(ENET_Type *ptr)
 
     if (ENET_DMA_STATUS_RI_GET(status)) {
         ptr->DMA_STATUS |= ENET_DMA_STATUS_RI_MASK;
-        ec_netdev_trigger_poll(&g_netdev);
+        while (ec_netdev_low_level_input(&g_netdev) == 0) {
+        }
     }
 
     if (ENET_MMC_INTR_RX_RXCTRLFIS_GET(rxgbfrmis)) {
