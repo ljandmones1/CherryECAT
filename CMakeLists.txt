@@ -29,7 +29,7 @@ if(CONFIG_CHERRYECAT)
     endif()
 
     if(HPM_SDK_BASE)
-        list(APPEND cherryec_srcs port/netdev_hpm.c)
+        list(APPEND cherryec_srcs port/netdev_hpmicro.c)
         sdk_inc(${cherryec_incs})
         sdk_src(${cherryec_srcs})
     endif()
