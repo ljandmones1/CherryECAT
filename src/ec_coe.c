@@ -126,13 +126,9 @@ static int ec_coe_download_common(ec_slave_t *slave,
 
     max_data_size = slave->configured_rx_mailbox_size - EC_MBOX_HEADER_SIZE - EC_COE_DOWN_REQ_HEADER_SIZE;
 
-    if (size > max_data_size) {
-        data_size = EC_COE_DOWN_REQ_HEADER_SIZE + max_data_size;
-    } else {
-        data_size = EC_COE_DOWN_REQ_HEADER_SIZE + size;
-    }
+    data_size = MIN(size, max_data_size);
 
-    data = ec_mailbox_fill_send(slave, datagram, EC_MBOX_TYPE_COE, data_size);
+    data = ec_mailbox_fill_send(slave, datagram, EC_MBOX_TYPE_COE, data_size + EC_COE_DOWN_REQ_HEADER_SIZE);
 
     download_common = (ec_coe_download_common_header_t *)data;
     download_common->coe_header.number = 0;
@@ -148,7 +144,7 @@ static int ec_coe_download_common(ec_slave_t *slave,
     download_common->subindex = complete_access ? 0x00 : subindex;
 
     ec_memcpy(download_common->data, &size, 4);
-    ec_memcpy(data + EC_COE_DOWN_REQ_HEADER_SIZE, buf, data_size - EC_COE_DOWN_REQ_HEADER_SIZE);
+    ec_memcpy(data + EC_COE_DOWN_REQ_HEADER_SIZE, buf, data_size);
     ret = ec_mailbox_send(slave, datagram);
     if (ret < 0) {
         return ret;
@@ -201,13 +197,13 @@ static int ec_coe_download_segment(ec_slave_t *slave,
 
     if (size > EC_COE_DOWN_SEG_MIN_DATA_SIZE) {
         seg_size = 0;
-        data_size = EC_COE_DOWN_SEG_REQ_HEADER_SIZE + size;
+        data_size = size;
     } else {
         seg_size = EC_COE_DOWN_SEG_MIN_DATA_SIZE - size;
-        data_size = EC_COE_DOWN_SEG_REQ_HEADER_SIZE + EC_COE_DOWN_SEG_MIN_DATA_SIZE;
+        data_size = EC_COE_DOWN_SEG_MIN_DATA_SIZE;
     }
 
-    data = ec_mailbox_fill_send(slave, datagram, EC_MBOX_TYPE_COE, data_size);
+    data = ec_mailbox_fill_send(slave, datagram, EC_MBOX_TYPE_COE, data_size + EC_COE_DOWN_SEG_REQ_HEADER_SIZE);
 
     download_seg = (ec_coe_download_segment_header_t *)data;
     download_seg->coe_header.number = 0;
