@@ -29,6 +29,7 @@
 #include "ec_cmd.h"
 #include "ec_perf.h"
 #include "ec_version.h"
+#include "ec_foe.h"
 
 #define jiffies ec_htimer_get_time_us()
 

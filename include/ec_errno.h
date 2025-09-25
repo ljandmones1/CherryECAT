@@ -16,10 +16,14 @@
 #define EC_ERR_SII         7  /**< SII error */
 #define EC_ERR_MBOX        8  /**< mailbox error */
 #define EC_ERR_COE_TYPE    9  /**< COE type error */
-#define EC_ERR_COE_SIZE    10  /**< COE size error */
+#define EC_ERR_COE_SIZE    10 /**< COE size error */
 #define EC_ERR_COE_REQUEST 11 /**< COE request & index & subindex error */
 #define EC_ERR_COE_TOGGLE  12 /**< COE toggle error */
 #define EC_ERR_COE_ABORT   13 /**< COE abort error */
+#define EC_ERR_FOE_TYPE    14 /**< FOE type error */
+#define EC_ERR_FOE_SIZE    15 /**< FOE size error */
+#define EC_ERR_FOE_OPCODE  16 /**< FOE opcode error */
+#define EC_ERR_FOE_PACKNO  17 /**< FOE packet number error */
 
 #define EC_ERR_UNKNOWN     255
 

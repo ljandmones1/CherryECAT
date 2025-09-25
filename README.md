@@ -55,6 +55,7 @@ CherryECAT is a tiny and beautiful, high real-time and low-jitter EtherCAT maste
 ![ethercat](docs/assets/ethercat5.png)
 ![ethercat](docs/assets/ethercat6.png)
 ![ethercat](docs/assets/ethercat7.png)
+![ethercat](docs/assets/ethercat8.png)
 
 ## Tool
 

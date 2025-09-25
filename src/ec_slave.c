@@ -516,18 +516,18 @@ static int ec_slave_config(ec_master_t *master, ec_slave_t *slave)
         sm_info[0].physical_start_address = slave->sii.boot_rx_mailbox_offset;
         sm_info[0].control = 0x26;
         sm_info[0].length = slave->sii.boot_rx_mailbox_size;
-        sm_info[0].enable = 0x0001;
+        sm_info[0].enable = 0x01;
 
         sm_info[1].physical_start_address = slave->sii.boot_tx_mailbox_offset;
         sm_info[1].control = 0x22;
         sm_info[1].length = slave->sii.boot_tx_mailbox_size;
-        sm_info[1].enable = 0x0001;
+        sm_info[1].enable = 0x01;
 
         // Config mailbox sm
         ec_datagram_fpwr(datagram, slave->station_address, ESCREG_OF(ESCREG->SYNCM[0]), EC_SYNC_PAGE_SIZE * 2);
         ec_datagram_zero(datagram);
         for (uint8_t i = 0; i < 2; i++) {
-            ec_slave_sm_config(sm_info, datagram->data + EC_SYNC_PAGE_SIZE * i);
+            ec_slave_sm_config(&sm_info[i], datagram->data + EC_SYNC_PAGE_SIZE * i);
         }
         datagram->netdev_idx = slave->netdev_idx;
         ret = ec_master_queue_ext_datagram(master, datagram, true, true);

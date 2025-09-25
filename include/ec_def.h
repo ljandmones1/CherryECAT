@@ -10,19 +10,19 @@
  *	IEEE 802.3 Ethernet magic constants.  The frame sizes omit the preamble
  *	and FCS/CRC (frame check sequence).
  */
-#define ETH_ALEN                     6    /* Octets in one ethernet addr	 */
-#define ETH_TLEN                     2    /* Octets in ethernet type field */
-#define ETH_HLEN                     14   /* Total octets in header.	 */
-#define ETH_ZLEN                     60   /* Min. octets in frame sans FCS */
-#define ETH_DATA_LEN                 1500 /* Max. octets in payload	 */
-#define ETH_FRAME_LEN                1514 /* Max. octets in frame sans FCS */
-#define ETH_FCS_LEN                  4    /* Octets in the FCS		 */
+#define ETH_ALEN      6    /* Octets in one ethernet addr	 */
+#define ETH_TLEN      2    /* Octets in ethernet type field */
+#define ETH_HLEN      14   /* Total octets in header.	 */
+#define ETH_ZLEN      60   /* Min. octets in frame sans FCS */
+#define ETH_DATA_LEN  1500 /* Max. octets in payload	 */
+#define ETH_FRAME_LEN 1514 /* Max. octets in frame sans FCS */
+#define ETH_FCS_LEN   4    /* Octets in the FCS		 */
 
-#define ETH_MIN_MTU                  68      /* Min IPv4 MTU per RFC791	*/
-#define ETH_MAX_MTU                  0xFFFFU /* 65535, same as IP_MAX_MTU	*/
+#define ETH_MIN_MTU 68      /* Min IPv4 MTU per RFC791	*/
+#define ETH_MAX_MTU 0xFFFFU /* 65535, same as IP_MAX_MTU	*/
 
 /** Datagram timeout in microseconds. */
-#define EC_IO_TIMEOUT                500
+#define EC_IO_TIMEOUT 500
 
 /** Time to send a byte in nanoseconds.
  *
@@ -31,82 +31,82 @@
 #define EC_BYTE_TRANSMISSION_TIME_NS 80
 
 /** Minimum size of a buffer used with ec_state_string(). */
-#define EC_STATE_STRING_SIZE         32
+#define EC_STATE_STRING_SIZE 32
 
 /** Maximum SII size in words, to avoid infinite reading. */
-#define EC_MAX_SII_SIZE              4096
+#define EC_MAX_SII_SIZE 4096
 
 /** Number of statistic rate intervals to maintain. */
-#define EC_RATE_COUNT                3
+#define EC_RATE_COUNT 3
 
 /*****************************************************************************
  * EtherCAT protocol
  ****************************************************************************/
 
 /** Size of an EtherCAT frame header. */
-#define EC_FRAME_HEADER_SIZE         2
+#define EC_FRAME_HEADER_SIZE 2
 
 /** Size of an EtherCAT datagram header. */
-#define EC_DATAGRAM_HEADER_SIZE      10
+#define EC_DATAGRAM_HEADER_SIZE 10
 
 /** Size of an EtherCAT datagram workcounter. */
-#define EC_DATAGRAM_WC_SIZE          2
+#define EC_DATAGRAM_WC_SIZE 2
 
 /** Size of the EtherCAT address field. */
-#define EC_ADDR_LEN                  4
+#define EC_ADDR_LEN 4
 
 /** Resulting maximum data size of a single datagram in a frame. */
-#define EC_MAX_DATA_SIZE             (ETH_DATA_LEN - EC_FRAME_HEADER_SIZE - EC_DATAGRAM_HEADER_SIZE - EC_DATAGRAM_WC_SIZE)
+#define EC_MAX_DATA_SIZE (ETH_DATA_LEN - EC_FRAME_HEADER_SIZE - EC_DATAGRAM_HEADER_SIZE - EC_DATAGRAM_WC_SIZE)
 
 /** Mailbox header size.  */
-#define EC_MBOX_HEADER_SIZE          6
+#define EC_MBOX_HEADER_SIZE 6
 
 /** Word offset of first SII category. */
 #define EC_FIRST_SII_CATEGORY_OFFSET 0x40
 
 /** Size of a sync manager configuration page. */
-#define EC_SYNC_PAGE_SIZE            8
+#define EC_SYNC_PAGE_SIZE 8
 
 /** Maximum number of FMMUs per slave. */
-#define EC_MAX_FMMUS                 16
+#define EC_MAX_FMMUS 16
 
 /** Size of an FMMU configuration page. */
-#define EC_FMMU_PAGE_SIZE            16
+#define EC_FMMU_PAGE_SIZE 16
 
 /** Number of DC sync signals. */
-#define EC_SYNC_SIGNAL_COUNT         2
+#define EC_SYNC_SIGNAL_COUNT 2
 
 /** Size of the datagram decription string.
  *
  * This is also used as the maximum lenth of EoE device names.
  **/
-#define EC_DATAGRAM_NAME_SIZE        20
+#define EC_DATAGRAM_NAME_SIZE 20
 
 /** Maximum hostname size.
  *
  * Used inside the EoE set IP parameter request.
  */
-#define EC_MAX_HOSTNAME_SIZE         32
+#define EC_MAX_HOSTNAME_SIZE 32
 
 /** Maximum number of sync managers per slave.
  */
-#define EC_MAX_SYNC_MANAGERS         16
+#define EC_MAX_SYNC_MANAGERS 16
 
 /** Maximum string length.
  *
  * Used in ec_slave_info_t.
  */
-#define EC_MAX_STRING_LENGTH         64
+#define EC_MAX_STRING_LENGTH 64
 
 /** Maximum number of slave ports. */
-#define EC_MAX_PORTS                 4
+#define EC_MAX_PORTS 4
 
 /** Slave state mask.
  *
  * Apply this mask to a slave state byte to get the slave state without
  * the error flag.
  */
-#define EC_SLAVE_STATE_MASK          0x0F
+#define EC_SLAVE_STATE_MASK 0x0F
 
 /** State of an EtherCAT slave.
  */
@@ -236,41 +236,41 @@ typedef struct ec_alstatus {
 #define EC_ALSTATUSCODE_TEMPERATURE_TOO_LOW        0x0082 /**< The slave temperature is too low*/
 #define EC_ALSTATUSCODE_TEMPERATURE_TOO_HIGH       0x0083 /**< The slave temperature is too high*/
 
-#define EC_SII_ADDRESS_MANUF                       (0x0008)
-#define EC_SII_ADDRESS_PRODUCTCODE                 (0x000a)
-#define EC_SII_ADDRESS_REVISION                    (0x000c)
-#define EC_SII_ADDRESS_SN                          (0x000E)
-#define EC_SII_ADDRESS_BOOTRXMBX                   (0x0014)
-#define EC_SII_ADDRESS_BOOTTXMBX                   (0x0016)
-#define EC_SII_ADDRESS_MBXSIZE                     (0x0019)
-#define EC_SII_ADDRESS_TXMBXADR                    (0x001a)
-#define EC_SII_ADDRESS_RXMBXADR                    (0x0018)
-#define EC_SII_ADDRESS_MBXPROTO                    (0x001c)
-#define EC_SII_ADDRESS_ADDITIONAL_INFO             (0x0040)
+#define EC_SII_ADDRESS_MANUF           (0x0008)
+#define EC_SII_ADDRESS_PRODUCTCODE     (0x000a)
+#define EC_SII_ADDRESS_REVISION        (0x000c)
+#define EC_SII_ADDRESS_SN              (0x000E)
+#define EC_SII_ADDRESS_BOOTRXMBX       (0x0014)
+#define EC_SII_ADDRESS_BOOTTXMBX       (0x0016)
+#define EC_SII_ADDRESS_MBXSIZE         (0x0019)
+#define EC_SII_ADDRESS_TXMBXADR        (0x001a)
+#define EC_SII_ADDRESS_RXMBXADR        (0x0018)
+#define EC_SII_ADDRESS_MBXPROTO        (0x001c)
+#define EC_SII_ADDRESS_ADDITIONAL_INFO (0x0040)
 
-#define EC_SII_TYPE_NOP                            0x0000
-#define EC_SII_TYPE_STRINGS                        0x000A
-#define EC_SII_TYPE_DATATYPES                      0x0014
-#define EC_SII_TYPE_GENERAL                        0x001E
-#define EC_SII_TYPE_FMMU                           0x0028
-#define EC_SII_TYPE_SM                             0x0029
-#define EC_SII_TYPE_FMMUX                          0x002A
-#define EC_SII_TYPE_SYNCUNIT                       0x002B
-#define EC_SII_TYPE_TXPDO                          0x0032
-#define EC_SII_TYPE_RXPDO                          0x0033
-#define EC_SII_TYPE_DC                             0x003C
-#define EC_SII_TYPE_END                            0xFFFF
+#define EC_SII_TYPE_NOP       0x0000
+#define EC_SII_TYPE_STRINGS   0x000A
+#define EC_SII_TYPE_DATATYPES 0x0014
+#define EC_SII_TYPE_GENERAL   0x001E
+#define EC_SII_TYPE_FMMU      0x0028
+#define EC_SII_TYPE_SM        0x0029
+#define EC_SII_TYPE_FMMUX     0x002A
+#define EC_SII_TYPE_SYNCUNIT  0x002B
+#define EC_SII_TYPE_TXPDO     0x0032
+#define EC_SII_TYPE_RXPDO     0x0033
+#define EC_SII_TYPE_DC        0x003C
+#define EC_SII_TYPE_END       0xFFFF
 
-#define EC_SII_FMMU_NONE                           0x0000
-#define EC_SII_FMMU_READ                           0x0001
-#define EC_SII_FMMU_WRITE                          0x0002
-#define EC_SII_FMMU_SM_STATUS                      0x0003
+#define EC_SII_FMMU_NONE      0x0000
+#define EC_SII_FMMU_READ      0x0001
+#define EC_SII_FMMU_WRITE     0x0002
+#define EC_SII_FMMU_SM_STATUS 0x0003
 
-#define EC_SII_SM_UNKNOWN                          0x0000
-#define EC_SII_SM_MBX_OUT                          0x0001
-#define EC_SII_SM_MBX_IN                           0x0002
-#define EC_SII_SM_PROCESS_DATA_OUTPUT              0x0003
-#define EC_SII_SM_PROCESS_DATA_INPUT               0x0004
+#define EC_SII_SM_UNKNOWN             0x0000
+#define EC_SII_SM_MBX_OUT             0x0001
+#define EC_SII_SM_MBX_IN              0x0002
+#define EC_SII_SM_PROCESS_DATA_OUTPUT 0x0003
+#define EC_SII_SM_PROCESS_DATA_INPUT  0x0004
 
 typedef struct __PACKED ec_sii_base {
     uint16_t pdi_control;
@@ -398,12 +398,12 @@ typedef struct __PACKED ec_mailbox_header {
  */
 #define EC_MBOX_HEADER_SIZE 6
 
-#define EC_MBXPROT_AOE      0x0001
-#define EC_MBXPROT_EOE      0x0002
-#define EC_MBXPROT_COE      0x0004
-#define EC_MBXPROT_FOE      0x0008
-#define EC_MBXPROT_SOE      0x0010
-#define EC_MBXPROT_VOE      0x0020
+#define EC_MBXPROT_AOE 0x0001
+#define EC_MBXPROT_EOE 0x0002
+#define EC_MBXPROT_COE 0x0004
+#define EC_MBXPROT_FOE 0x0008
+#define EC_MBXPROT_SOE 0x0010
+#define EC_MBXPROT_VOE 0x0020
 
 /** Mailbox types.
  *
@@ -462,16 +462,50 @@ typedef struct __PACKED ec_sdo_header {
 #define EC_COE_SERVICE_RXPDO_REMOTE_REQUEST 0x07
 #define EC_COE_SERVICE_SDOINFO              0x08
 
-#define EC_COE_REQUEST_SEGMENT_DOWNLOAD     0x00
-#define EC_COE_REQUEST_DOWNLOAD             0x01
-#define EC_COE_REQUEST_UPLOAD               0x02
-#define EC_COE_REQUEST_SEGMENT_UPLOAD       0x03
-#define EC_COE_REQUEST_ABORT                0x04
+#define EC_COE_REQUEST_SEGMENT_DOWNLOAD 0x00
+#define EC_COE_REQUEST_DOWNLOAD         0x01
+#define EC_COE_REQUEST_UPLOAD           0x02
+#define EC_COE_REQUEST_SEGMENT_UPLOAD   0x03
+#define EC_COE_REQUEST_ABORT            0x04
 
-#define EC_COE_RESPONSE_SEGMENT_UPLOAD      0x00
-#define EC_COE_RESPONSE_SEGMENT_DOWNLOAD    0x01
-#define EC_COE_RESPONSE_UPLOAD              0x02
-#define EC_COE_RESPONSE_DOWNLOAD            0x03
+#define EC_COE_RESPONSE_SEGMENT_UPLOAD   0x00
+#define EC_COE_RESPONSE_SEGMENT_DOWNLOAD 0x01
+#define EC_COE_RESPONSE_UPLOAD           0x02
+#define EC_COE_RESPONSE_DOWNLOAD         0x03
+
+typedef struct __PACKED {
+    uint16_t opcode;
+    union {
+        uint32_t password;
+        uint32_t packet_number;
+        uint32_t error_code;
+    };
+} ec_foe_header_t;
+
+#define EC_FOE_OPCODE_READ  0x0001
+#define EC_FOE_OPCODE_WRITE 0x0002
+#define EC_FOE_OPCODE_DATA  0x0003
+#define EC_FOE_OPCODE_ACK   0x0004
+#define EC_FOE_OPCODE_ERROR 0x0005
+#define EC_FOE_OPCODE_BUSY  0x0006
+
+#define EC_FOE_ERRCODE_NOTDEFINED       0x8000 /**< \brief Not defined*/
+#define EC_FOE_ERRCODE_NOTFOUND         0x8001 /**< \brief The file requested by an FoE upload service could not be found on the server*/
+#define EC_FOE_ERRCODE_ACCESS           0x8002 /**< \brief Read or write access to this file not allowed (e.g. due to local control).*/
+#define EC_FOE_ERRCODE_DISKFULL         0x8003 /**< \brief Disk to store file is full or memory allocation exceeded*/
+#define EC_FOE_ERRCODE_ILLEGAL          0x8004 /**< \brief Illegal FoE operation, e.g. service identifier invalid*/
+#define EC_FOE_ERRCODE_PACKENO          0x8005 /**< \brief FoE packet number invalid*/
+#define EC_FOE_ERRCODE_EXISTS           0x8006 /**< \brief The file which is requested to be downloaded does already exist*/
+#define EC_FOE_ERRCODE_NOUSER           0x8007 /**< \brief No User*/
+#define EC_FOE_ERRCODE_BOOTSTRAPONLY    0x8008 /**< \brief FoE only supported in Bootstrap*/
+#define EC_FOE_ERRCODE_NOTINBOOTSTRAP   0x8009 /**< \brief This file may not be accessed in BOOTSTRAP state*/
+#define EC_FOE_ERRCODE_NORIGHTS         0x800A /**< \brief Password invalid*/
+#define EC_FOE_ERRCODE_PROGERROR        0x800B /**< \brief Generic programming error. Should only be returned if  error reason cannot be distinguished*/
+#define EC_FOE_ERRCODE_INVALID_CHECKSUM 0x800C /**< \brief checksum included in the file is invalid*/
+#define EC_FOE_ERRCODE_INVALID_FIRMWARE 0x800D /**< \brief The hardware does not support the downloaded firmware*/
+#define EC_FOE_ERRCODE_NO_FILE          0x800F /**< \brief Do not use (identical with 0x8001)*/
+#define EC_FOE_ERRCODE_NO_FILE_HEADER   0x8010 /**< \brief Missing file header of error in file header*/
+#define EC_FOE_ERRCODE_FLASH_ERROR      0x8011 /**< \brief Flash cannot be accessed*/
 
 typedef enum {
     EC_DIR_OUTPUT, /**< Values written by the master. */

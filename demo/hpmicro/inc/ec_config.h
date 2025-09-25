@@ -76,4 +76,6 @@
 #define CONFIG_EC_MAX_ENET_RXBUF_COUNT 10
 #endif
 
+//#define CONFIG_EC_FOE
+
 #endif

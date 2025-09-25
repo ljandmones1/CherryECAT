@@ -110,6 +110,10 @@ static void ec_master_cmd_show_help(void)
     EC_LOG_RAW("  pdo_read -p [idx]                              Read slave <idx> process data\n");
     EC_LOG_RAW("  pdo_write [offset] [hex low...high]            Write hexarray with offset to pdo\n");
     EC_LOG_RAW("  pdo_write -p [idx] [offset] [hex low...high]   Write slave <idx> hexarray with offset to pdo\n");
+#ifdef CONFIG_EC_FOE
+    EC_LOG_RAW("  foe_write -p [idx] [filename] [pwd] [hexdata]  Read hexarray via FoE\n");
+    EC_LOG_RAW("  foe_read -p [idx] [filename] [pwd]             Write hexarray via FoE\n");
+#endif
     EC_LOG_RAW("  sii_read -p [idx]                              Read SII\n");
     EC_LOG_RAW("  wc                                             Show master working counter\n");
 #ifdef CONFIG_EC_PERF_ENABLE
@@ -723,13 +727,6 @@ int ethercat(int argc, const char **argv)
             // ethercat pdos -p [x]
             ec_cmd_show_slave_pdos(global_cmd_master, atoi(argv[3]));
             return 0;
-        } else if (argc == 3 && strcmp(argv[2], "-v") == 0) {
-            // ethercat slaves -v
-            for (uint32_t i = 0; i < global_cmd_master->slave_count; i++) {
-                ec_cmd_show_slave_detail(global_cmd_master, i);
-            }
-
-            return 0;
         } else {
         }
     } else if (argc >= 3 && strcmp(argv[1], "states") == 0) {
@@ -737,12 +734,12 @@ int ethercat(int argc, const char **argv)
         if (argc == 3) {
             // ethercat states [state]
             for (uint32_t i = 0; i < global_cmd_master->slave_count; i++) {
-                ec_cmd_slave_state_request(global_cmd_master, i, strtol(argv[4], NULL, 16));
+                ec_cmd_slave_state_request(global_cmd_master, i, strtoul(argv[4], NULL, 16));
             }
             return 0;
         } else if (argc == 5 && strcmp(argv[2], "-p") == 0) {
             // ethercat states -p [x] [state]
-            ec_cmd_slave_state_request(global_cmd_master, atoi(argv[3]), strtol(argv[4], NULL, 16));
+            ec_cmd_slave_state_request(global_cmd_master, atoi(argv[3]), strtoul(argv[4], NULL, 16));
             return 0;
         } else {
         }
@@ -772,8 +769,8 @@ int ethercat(int argc, const char **argv)
         ec_datagram_init(&datagram, 512);
         ret = ec_coe_upload(&global_cmd_master->slaves[slave_idx],
                             &datagram,
-                            strtol(argv[4], NULL, 16),
-                            argc >= 6 ? strtol(argv[5], NULL, 16) : 0x00,
+                            strtoul(argv[4], NULL, 16),
+                            argc >= 6 ? strtoul(argv[5], NULL, 16) : 0x00,
                             output_buffer,
                             sizeof(output_buffer),
                             &actual_size,
@@ -798,7 +795,7 @@ int ethercat(int argc, const char **argv)
             EC_LOG_RAW("No slaves found\n");
             return -1;
         }
-        u32data = strtol(argv[6], NULL, 16);
+        u32data = strtoul(argv[6], NULL, 16);
 
         if (u32data < 0xff)
             size = 1;
@@ -810,8 +807,8 @@ int ethercat(int argc, const char **argv)
         ec_datagram_init(&datagram, 512);
         ret = ec_coe_download(&global_cmd_master->slaves[slave_idx],
                               &datagram,
-                              strtol(argv[4], NULL, 16),
-                              strtol(argv[5], NULL, 16),
+                              strtoul(argv[4], NULL, 16),
+                              strtoul(argv[5], NULL, 16),
                               &u32data,
                               size,
                               false);
@@ -905,7 +902,7 @@ int ethercat(int argc, const char **argv)
                 return -1;
             }
 
-            offset = strtol(argv[4], NULL, 16);
+            offset = strtoul(argv[4], NULL, 16);
 
             size = parse_hex_string(argv[5], hexdata, sizeof(hexdata));
             if (size < 0) {
@@ -920,7 +917,7 @@ int ethercat(int argc, const char **argv)
             }
             return 0;
         } else {
-            offset = strtol(argv[2], NULL, 16);
+            offset = strtoul(argv[2], NULL, 16);
 
             size = parse_hex_string(argv[3], hexdata, sizeof(hexdata));
             if (size < 0) {
@@ -938,7 +935,77 @@ int ethercat(int argc, const char **argv)
             }
             return 0;
         }
-    } else if (argc >= 3 && strcmp(argv[1], "timediff") == 0) {
+    }
+#ifdef CONFIG_EC_FOE
+    else if (argc >= 7 && strcmp(argv[1], "foe_write") == 0) {
+        // ethercat foe_write -p [slave_idx] [filename] [password] [hexdata]
+        uint8_t hexdata[256];
+        uint32_t size;
+        int ret;
+        uint32_t slave_idx = atoi(argv[3]);
+        if (slave_idx >= global_cmd_master->slave_count) {
+            EC_LOG_RAW("No slaves found\n");
+            return -1;
+        }
+        const char *filename = argv[4];
+        uint32_t password = strtoul(argv[5], NULL, 16);
+
+        size = parse_hex_string(argv[6], hexdata, sizeof(hexdata));
+        if (size < 0) {
+            return -1;
+        }
+        static ec_datagram_t datagram;
+
+        ec_datagram_init(&datagram, 4096);
+
+        EC_SLAVE_LOG_INFO("Slave %u foe write file %s, password: 0x%08x, size %u\n", slave_idx, filename, password, size);
+
+        ec_osal_mutex_take(global_cmd_master->scan_lock);
+        ret = ec_foe_write(&global_cmd_master->slaves[slave_idx], &datagram, filename, password, hexdata, size);
+        ec_osal_mutex_give(global_cmd_master->scan_lock);
+
+        if (ret < 0) {
+            EC_SLAVE_LOG_ERR("Slave %u foe_write failed: %d\n", slave_idx, ret);
+        } else {
+            EC_LOG_RAW("Slave %u foe write success\n", slave_idx);
+        }
+
+        ec_datagram_clear(&datagram);
+        return 0;
+    } else if (argc >= 6 && strcmp(argv[1], "foe_read") == 0) {
+        // ethercat foe_read -p [slave_idx] [filename] [password]
+        uint8_t hexdata[256];
+        uint32_t size;
+        int ret;
+        uint32_t slave_idx = atoi(argv[3]);
+        if (slave_idx >= global_cmd_master->slave_count) {
+            EC_LOG_RAW("No slaves found\n");
+            return -1;
+        }
+        const char *filename = argv[4];
+        uint32_t password = strtoul(argv[5], NULL, 16);
+
+        EC_SLAVE_LOG_INFO("Slave %u foe read file %s, password: 0x%08x\n", slave_idx, filename, password);
+
+        static ec_datagram_t datagram;
+
+        ec_datagram_init(&datagram, 4096);
+
+        ec_osal_mutex_take(global_cmd_master->scan_lock);
+        ret = ec_foe_read(&global_cmd_master->slaves[slave_idx], &datagram, filename, password, hexdata, sizeof(hexdata), &size);
+        ec_osal_mutex_give(global_cmd_master->scan_lock);
+
+        if (ret < 0) {
+            EC_SLAVE_LOG_ERR("Slave %u foe_read failed: %d\n", slave_idx, ret);
+        } else {
+            ec_hexdump(hexdata, size);
+        }
+
+        ec_datagram_clear(&datagram);
+        return 0;
+    }
+#endif
+    else if (argc >= 3 && strcmp(argv[1], "timediff") == 0) {
         if (strcmp(argv[2], "-s") == 0) {
             uintptr_t flags;
 

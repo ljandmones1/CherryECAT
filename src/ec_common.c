@@ -224,8 +224,8 @@ const ec_code_msg_t al_status_messages[] = {
     { 0x0012, "Unknown requested state" },
     { 0x0013, "Bootstrap not supported" },
     { 0x0014, "No valid firmware" },
-    { 0x0015, "Invalid mailbox configuration" },
-    { 0x0016, "Invalid mailbox configuration" },
+    { 0x0015, "Invalid mailbox configuration (BOOT state)" },
+    { 0x0016, "Invalid mailbox configuration (PreOP state)" },
     { 0x0017, "Invalid sync manager configuration" },
     { 0x0018, "No valid inputs available" },
     { 0x0019, "No valid outputs" },
@@ -335,14 +335,46 @@ const ec_code_msg_t sdo_abort_messages[] = {
                   " because of the present device state" },
     { 0x08000023, "Object dictionary dynamic generation fails or no object"
                   " dictionary is present" },
-    {}
+    { 0xffffffff }
 };
 
 const char *ec_sdo_abort_string(uint32_t errorcode)
 {
-    for (uint32_t i = 0; sdo_abort_messages[i].code != 0; i++) {
+    for (uint32_t i = 0; sdo_abort_messages[i].code != 0xffffffff; i++) {
         if (sdo_abort_messages[i].code == errorcode) {
             return sdo_abort_messages[i].message;
+        }
+    }
+    return "Unknown errorcode";
+}
+
+const ec_code_msg_t foe_errcode_messages[] = {
+    { EC_FOE_ERRCODE_NOTDEFINED, "Not defined" },
+    { EC_FOE_ERRCODE_NOTFOUND, "The file requested by an FoE upload service could not be found on the server" },
+    { EC_FOE_ERRCODE_ACCESS, "Read or write access to this file not allowed (e.g. due to local control)" },
+    { EC_FOE_ERRCODE_DISKFULL, "Disk to store file is full or memory allocation exceeded" },
+    { EC_FOE_ERRCODE_ILLEGAL, "Illegal FoE operation, e.g. service identifier invalid" },
+    { EC_FOE_ERRCODE_PACKENO, "FoE packet number invalid" },
+    { EC_FOE_ERRCODE_EXISTS, "The file which is requested to be downloaded does already exist" },
+    { EC_FOE_ERRCODE_NOUSER, "No User" },
+    { EC_FOE_ERRCODE_BOOTSTRAPONLY, "FoE only supported in Bootstrap" },
+    { EC_FOE_ERRCODE_NOTINBOOTSTRAP, "This file may not be accessed in BOOTSTRAP state" },
+    { EC_FOE_ERRCODE_NORIGHTS, "Password invalid" },
+    { EC_FOE_ERRCODE_PROGERROR, "Generic programming error. Should only be returned if  error reason cannot be distinguished" },
+    { EC_FOE_ERRCODE_INVALID_CHECKSUM, "checksum included in the file is invalid" },
+    { EC_FOE_ERRCODE_INVALID_FIRMWARE, "The hardware does not support the downloaded firmware" },
+    { EC_FOE_ERRCODE_NO_FILE, "Do not use (identical with 0x8001)" },
+    { EC_FOE_ERRCODE_NO_FILE_HEADER, "Missing file header of error in file header" },
+    { EC_FOE_ERRCODE_FLASH_ERROR, "Flash cannot be accessed" },
+    { 0xffffffff }
+
+};
+
+const char *foe_errorcode_string(uint16_t errorcode)
+{
+    for (uint32_t i = 0; foe_errcode_messages[i].code != 0xffffffff; i++) {
+        if (foe_errcode_messages[i].code == errorcode) {
+            return foe_errcode_messages[i].message;
         }
     }
     return "Unknown errorcode";

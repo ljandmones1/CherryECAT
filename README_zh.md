@@ -55,6 +55,7 @@ CherryECAT 是一个小而美的、高实时性、低抖动的 EtherCAT 主机�
 ![ethercat](docs/assets/ethercat5.png)
 ![ethercat](docs/assets/ethercat6.png)
 ![ethercat](docs/assets/ethercat7.png)
+![ethercat](docs/assets/ethercat8.png)
 
 ## 工具
 
