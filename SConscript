@@ -18,7 +18,7 @@ src += Glob('src/ec_netdev.c')
 src += Glob('src/ec_perf.c')
 src += Glob('src/ec_sii.c')
 src += Glob('src/ec_slave.c')
-src += Glob('src/osal/ec_osal_rtthread.c')
+src += Glob('osal/ec_osal_rtthread.c')
 
 group = DefineGroup('CherryECAT', src, depend = ['PKG_USING_CHERRYECAT'], LIBS = LIBS, LIBPATH=LIBPATH, CPPPATH = path, CPPDEFINES = CPPDEFINES)
 
