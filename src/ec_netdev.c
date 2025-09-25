@@ -86,9 +86,9 @@ ec_netdev_t *ec_netdev_init(uint8_t netdev_index)
     return netdev;
 }
 
-bool ec_netdev_get_link_state(ec_netdev_t *netdev)
+void ec_netdev_poll_link_state(ec_netdev_t *netdev)
 {
-    return ec_netdev_low_level_get_link_state(netdev);
+    ec_netdev_low_level_poll_link_state(netdev);
 }
 
 EC_FAST_CODE_SECTION uint8_t *ec_netdev_get_txbuf(ec_netdev_t *netdev)

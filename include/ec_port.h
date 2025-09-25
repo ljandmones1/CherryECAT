@@ -11,8 +11,7 @@
 typedef void (*ec_htimer_cb)(void *arg);
 
 ec_netdev_t *ec_netdev_low_level_init(uint8_t netdev_index);
-void ec_netdev_low_level_enable_irq(ec_netdev_t *netdev, bool enable);
-bool ec_netdev_low_level_get_link_state(ec_netdev_t *netdev);
+void ec_netdev_low_level_poll_link_state(ec_netdev_t *netdev);
 uint8_t *ec_netdev_low_level_get_txbuf(ec_netdev_t *netdev);
 int ec_netdev_low_level_output(ec_netdev_t *netdev, uint32_t size);
 int ec_netdev_low_level_input(ec_netdev_t *netdev);

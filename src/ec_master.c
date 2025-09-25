@@ -387,7 +387,7 @@ static void ec_netdev_linkpoll_timer(void *argument)
     unsigned int netdev_idx;
 
     for (netdev_idx = EC_NETDEV_MAIN; netdev_idx < CONFIG_EC_MAX_NETDEVS; netdev_idx++) {
-        master->netdev[netdev_idx]->link_state = ec_netdev_get_link_state(master->netdev[netdev_idx]);
+        ec_netdev_poll_link_state(master->netdev[netdev_idx]);
     }
 }
 

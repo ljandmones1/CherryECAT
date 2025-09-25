@@ -226,7 +226,7 @@ ec_netdev_t *ec_netdev_low_level_init(uint8_t netdev_index)
     return &g_netdev;
 }
 
-bool ec_netdev_low_level_get_link_state(ec_netdev_t *netdev)
+void ec_netdev_low_level_poll_link_state(ec_netdev_t *netdev)
 {
     static enet_phy_status_t last_status;
     enet_phy_status_t status = { 0 };
@@ -252,11 +252,11 @@ bool ec_netdev_low_level_get_link_state(ec_netdev_t *netdev)
         if (status.enet_phy_link) {
             enet_set_line_speed(ENET, line_speed[status.enet_phy_speed]);
             enet_set_duplex_mode(ENET, status.enet_phy_duplex);
+            netdev->link_state = true;
         } else {
+            netdev->link_state = false;
         }
     }
-
-    return status.enet_phy_link;
 }
 
 EC_FAST_CODE_SECTION uint8_t *ec_netdev_low_level_get_txbuf(ec_netdev_t *netdev)
