@@ -24,7 +24,7 @@ void ec_perf_init(ec_perf_t *perf, uint64_t expected_interval_us)
 
 EC_FAST_CODE_SECTION void ec_perf_polling(ec_perf_t *perf)
 {
-    uint64_t current_timestamp = ec_htimer_get_time_us();
+    uint64_t current_timestamp = jiffies;
 
     if (!perf->enable) {
         return;

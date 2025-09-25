@@ -37,7 +37,7 @@ CherryECAT is a tiny and beautiful, high real-time and low-jitter EtherCAT maste
 	- ENET must support descriptor dma and iperf with lwip > 90 Mbps
 	- Code must run in ram, ignore if no dc
 	- Must support High-Precision Timer (jitter < 1us)
-	- Must support High-Precision timestamp (like ARM DWT)
+	- Must support High-Precision timestamp (ARM DWT/RISC-V MCYCLE)
 	- Must support long long print
 
 - **Slave**

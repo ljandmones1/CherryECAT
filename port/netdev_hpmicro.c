@@ -50,8 +50,6 @@ uint8_t mac[ENET_MAC];
 
 ec_netdev_t g_netdev;
 
-uint32_t g_clock_time_div;
-
 ATTR_WEAK void enet_get_mac_address(uint8_t *mac)
 {
     bool invalid = true;
@@ -187,8 +185,6 @@ hpm_stat_t enet_init(ENET_Type *ptr)
 
 ec_netdev_t *ec_netdev_low_level_init(uint8_t netdev_index)
 {
-    g_clock_time_div = clock_get_frequency(clock_cpu0) / 1000000UL;
-
     /* Initialize GPIOs */
     board_init_enet_pins(ENET);
 
@@ -419,12 +415,7 @@ void ec_htimer_stop(void)
     intc_m_disable_irq(EC_HTIMER_IRQ);
 }
 
-EC_FAST_CODE_SECTION uint64_t ec_htimer_get_time_ns(void)
+uint32_t ec_get_cpu_frequency(void)
 {
-    return (hpm_csr_get_core_mcycle() * 1000) / g_clock_time_div;
-}
-
-EC_FAST_CODE_SECTION uint64_t ec_htimer_get_time_us(void)
-{
-    return hpm_csr_get_core_mcycle() / g_clock_time_div;
+    return clock_get_frequency(clock_cpu0);
 }

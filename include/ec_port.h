@@ -18,7 +18,7 @@ int ec_netdev_low_level_input(ec_netdev_t *netdev);
 
 void ec_htimer_start(uint32_t us, ec_htimer_cb cb, void *arg);
 void ec_htimer_stop(void);
-uint64_t ec_htimer_get_time_ns(void);
-uint64_t ec_htimer_get_time_us(void);
+
+uint32_t ec_get_cpu_frequency(void);
 
 #endif

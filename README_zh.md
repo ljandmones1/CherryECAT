@@ -37,7 +37,7 @@ CherryECAT 是一个小而美的、高实时性、低抖动的 EtherCAT 主机�
 	- 以太网必须支持 descriptor dma 并且 iperf with lwip > 90 Mbps
 	- 代码必须跑在 ram 上，如果不使用 DC 同步则忽视
 	- 必须支持高精度定时器（抖动小于 1us）
-	- 必须支持高精度时间戳 (比如 ARM DWT)
+	- 必须支持高精度时间戳 (ARM DWT/RISC-V MCYCLE)
 	- 必须支持 64 位打印
 
 - 从站

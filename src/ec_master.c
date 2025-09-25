@@ -442,6 +442,8 @@ int ec_master_init(ec_master_t *master, uint8_t master_index)
     ec_dlist_init(&master->ext_datagram_queue);
     ec_dlist_init(&master->cyclic_datagram_queue);
 
+    ec_timestamp_init();
+
     for (netdev_idx = EC_NETDEV_MAIN; netdev_idx < CONFIG_EC_MAX_NETDEVS; netdev_idx++) {
         master->netdev[netdev_idx] = ec_netdev_init(netdev_idx);
         if (!master->netdev[netdev_idx]) {
@@ -831,9 +833,9 @@ EC_FAST_CODE_SECTION static void ec_master_period_process(void *arg)
     }
 
     if (master->dc_ref_clock) {
-        EC_WRITE_U32(master->dc_ref_sync_datagram.data, ec_htimer_get_time_ns() & 0xffffffff);
+        EC_WRITE_U32(master->dc_ref_sync_datagram.data, ec_timestamp_get_time_ns() & 0xffffffff);
         if (master->dc_ref_clock->base_dc_range == EC_DC_64) {
-            EC_WRITE_U32(master->dc_ref_sync_datagram.data + 4, (uint32_t)(ec_htimer_get_time_ns() >> 32));
+            EC_WRITE_U32(master->dc_ref_sync_datagram.data + 4, (uint32_t)(ec_timestamp_get_time_ns() >> 32));
         }
         ec_master_queue_datagram(master, &master->dc_ref_sync_datagram);
 

@@ -436,7 +436,7 @@ static int ec_slave_config_dc_systime_and_delay(ec_slave_t *slave)
         }
         system_time = EC_READ_U64(datagram->data);
         old_system_time_offset = EC_READ_U64(datagram->data + 16);
-        time_diff = ec_htimer_get_time_ns() - system_time;
+        time_diff = ec_timestamp_get_time_ns() - system_time;
 
         if (slave->base_dc_range == EC_DC_32) {
             system_time = (uint32_t)system_time + datagram->jiffies_sent * 1000;
@@ -741,7 +741,7 @@ static int ec_slave_config(ec_master_t *master, ec_slave_t *slave)
         uint64_t dc_start_time;
         uint32_t remainder = EC_DC_START_OFFSET / (slave->config->dc_sync[0].cycle_time + slave->config->dc_sync[1].cycle_time);
 
-        dc_start_time = ec_htimer_get_time_ns() + EC_DC_START_OFFSET +
+        dc_start_time = ec_timestamp_get_time_ns() + EC_DC_START_OFFSET +
                         slave->config->dc_sync[0].cycle_time + slave->config->dc_sync[1].cycle_time - remainder +
                         slave->config->dc_sync[0].shift_time;
         ec_datagram_fpwr(datagram, slave->station_address, ESCREG_OF(ESCREG->START_TIME_CO), 8);
