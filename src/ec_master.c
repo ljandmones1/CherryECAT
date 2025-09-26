@@ -349,13 +349,6 @@ EC_FAST_CODE_SECTION static void ec_master_send(ec_master_t *master)
         }
     }
 
-    // move all external datagrams to the main queue
-    ec_dlist_for_each_entry_safe(datagram, n, &master->ext_datagram_queue, ext_queue)
-    {
-        ec_dlist_del_init(&datagram->ext_queue);
-        ec_master_queue_datagram(master, datagram);
-    }
-
     for (netdev_idx = EC_NETDEV_MAIN; netdev_idx < CONFIG_EC_MAX_NETDEVS; netdev_idx++) {
         if (!master->netdev[netdev_idx]->link_state) {
             // link is down, no datagram can be sent
@@ -439,7 +432,6 @@ int ec_master_init(ec_master_t *master, uint8_t master_index)
     master->datagram_index = 1; // start with index 1
 
     ec_dlist_init(&master->datagram_queue);
-    ec_dlist_init(&master->ext_datagram_queue);
     ec_dlist_init(&master->cyclic_datagram_queue);
 
     ec_timestamp_init();
@@ -670,8 +662,8 @@ int ec_master_queue_ext_datagram(ec_master_t *master, ec_datagram_t *datagram, b
     int ret;
 
     flags = ec_osal_enter_critical_section();
-    ec_dlist_add_tail(&master->ext_datagram_queue, &datagram->ext_queue);
     datagram->waiter = waiter;
+    ec_master_queue_datagram(master, datagram);
 
     if (wakep_poll && master->nonperiod_sem) {
         ec_osal_sem_give(master->nonperiod_sem);
