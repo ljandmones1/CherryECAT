@@ -6,7 +6,7 @@
 #include "ec_master.h"
 
 #ifndef CONFIG_EC_TIMESTAMP_CUSTOM
-#ifdef __riscv
+#if defined(__riscv) || defined(__ICCRISCV__)
 
 #define READ_CSR(csr_num) ({ uint32_t v; __asm volatile("csrr %0, %1" : "=r"(v) : "i"(csr_num)); v; })
 
@@ -49,7 +49,7 @@ EC_FAST_CODE_SECTION uint64_t ec_timestamp_get_time_us(void)
 {
     return riscv_csr_get_core_mcycle() / g_clock_time_div;
 }
-#elif defined(__arm__)
+#elif defined(__arm__) || defined(__ICCARM__) || defined(__ARMCC_VERSION)
 
 #define DWT_CR     (*(volatile uint32_t *)0xE0001000)
 #define DWT_CYCCNT (*(volatile uint32_t *)0xE0001004)
@@ -61,6 +61,7 @@ EC_FAST_CODE_SECTION uint64_t ec_timestamp_get_time_us(void)
 
 static volatile uint32_t g_dwt_high = 0;
 static volatile uint32_t g_dwt_last_low = 0;
+static uint32_t g_clock_time_div;
 
 static inline uint64_t arm_dwt_get_cycle_count(void)
 {
