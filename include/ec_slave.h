@@ -95,6 +95,7 @@ typedef struct ec_slave {
     uint32_t odata_size;
     uint32_t idata_size;
     uint32_t expected_working_counter;
+    uint32_t actual_working_counter;
 
     uint16_t *sii_image; /**< Complete SII image. */
     size_t sii_nwords;   /**< Size of the SII contents in words. */

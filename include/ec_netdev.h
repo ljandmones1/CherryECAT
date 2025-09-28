@@ -6,10 +6,13 @@
 #ifndef EC_NETDEV_H
 #define EC_NETDEV_H
 
+#include "phy/chry_phy.h"
+
 typedef struct ec_master ec_master_t;
 
 typedef struct ec_netdev {
     ec_master_t *master;
+    struct chry_phy_device phydev;
     uint8_t index;
     char name[20];
     uint8_t mac_addr[6];

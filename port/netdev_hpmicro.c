@@ -81,6 +81,7 @@ hpm_stat_t enet_init(ENET_Type *ptr)
     enet_mac_config_t enet_config;
     enet_tx_control_config_t enet_tx_control_config;
 
+#ifdef CONFIG_EC_PHY_CUSTOM
 #if defined(RGMII) && RGMII
 #if defined(__USE_DP83867) && __USE_DP83867
     dp83867_config_t phy_config;
@@ -92,6 +93,7 @@ hpm_stat_t enet_init(ENET_Type *ptr)
     dp83848_config_t phy_config;
 #else
     rtl8201_config_t phy_config;
+#endif
 #endif
 #endif
 
@@ -150,6 +152,7 @@ hpm_stat_t enet_init(ENET_Type *ptr)
     enet_disable_lpi_interrupt(ENET);
 #endif
 
+#ifdef CONFIG_EC_PHY_CUSTOM
 /* Initialize phy */
 #if defined(RGMII) && RGMII
 #if defined(__USE_DP83867) && __USE_DP83867
@@ -175,12 +178,13 @@ hpm_stat_t enet_init(ENET_Type *ptr)
     if (rtl8201_basic_mode_init(ptr, &phy_config) == true) {
 #endif
 #endif
-        printf("Enet phy init passed !\n");
-        return status_success;
+        EC_LOG_DBG("Enet phy init passed !\n");
     } else {
-        printf("Enet phy init failed !\n");
+        EC_LOG_DBG("Enet phy init failed !\n");
         return status_fail;
     }
+#endif
+    return status_success;
 }
 
 ec_netdev_t *ec_netdev_low_level_init(uint8_t netdev_index)
@@ -196,13 +200,13 @@ ec_netdev_t *ec_netdev_low_level_init(uint8_t netdev_index)
 #else
     /* Set RMII reference clock */
     board_init_enet_rmii_reference_clock(ENET, BOARD_ENET_RMII_INT_REF_CLK);
-    printf("Reference Clock: %s\n", BOARD_ENET_RMII_INT_REF_CLK ? "Internal Clock" : "External Clock");
+    EC_LOG_DBG("Reference Clock: %s\n", BOARD_ENET_RMII_INT_REF_CLK ? "Internal Clock" : "External Clock");
 #endif
 
     /* Initialize MAC and DMA */
     if (enet_init(ENET) == 0) {
     } else {
-        printf("Enet initialization fails !!!\n");
+        EC_LOG_DBG("Enet initialization fails !!!\n");
         while (1) {
         }
     }
@@ -222,6 +226,44 @@ ec_netdev_t *ec_netdev_low_level_init(uint8_t netdev_index)
     return &g_netdev;
 }
 
+#ifndef CONFIG_EC_PHY_CUSTOM
+void ec_mdio_low_level_write(struct chry_phy_device *phydev, uint16_t phy_addr, uint16_t regnum, uint16_t val)
+{
+    //ec_netdev_t *netdev = (ec_netdev_t *)phydev->user_data;
+    enet_write_phy(ENET, phy_addr, regnum, val);
+}
+
+uint16_t ec_mdio_low_level_read(struct chry_phy_device *phydev, uint16_t phy_addr, uint16_t regnum)
+{
+    //ec_netdev_t *netdev = (ec_netdev_t *)phydev->user_data;
+    return enet_read_phy(ENET, phy_addr, regnum);
+}
+
+void ec_netdev_low_level_link_up(ec_netdev_t *netdev, struct chry_phy_status *status)
+{
+    enet_line_speed_t line_speed = enet_line_speed_10mbps;
+
+    switch (status->speed) {
+        case 10:
+            line_speed = enet_line_speed_10mbps;
+            break;
+        case 100:
+            line_speed = enet_line_speed_100mbps;
+            break;
+        case 1000:
+            line_speed = enet_line_speed_1000mbps;
+            break;
+
+        default:
+            break;
+    }
+    if (status->link) {
+        enet_set_line_speed(ENET, line_speed);
+        enet_set_duplex_mode(ENET, status->duplex);
+    } else {
+    }
+}
+#else
 void ec_netdev_low_level_poll_link_state(ec_netdev_t *netdev)
 {
     static enet_phy_status_t last_status;
@@ -254,6 +296,7 @@ void ec_netdev_low_level_poll_link_state(ec_netdev_t *netdev)
         }
     }
 }
+#endif
 
 EC_FAST_CODE_SECTION uint8_t *ec_netdev_low_level_get_txbuf(ec_netdev_t *netdev)
 {
