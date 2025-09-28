@@ -74,6 +74,7 @@ typedef struct {
     uint8_t *send_buffer;
 #endif
     uint32_t expected_working_counter;
+    ec_slave_t *slave;
 } ec_cyclic_datagram_t;
 
 typedef struct ec_master {

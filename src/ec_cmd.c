@@ -747,10 +747,19 @@ int ethercat(int argc, const char **argv)
         // ethercat wc
         if (argc == 2) {
             // ethercat wc
-            EC_LOG_RAW("Master %d working counter(expect/actual): %u/%u\n",
+            EC_LOG_RAW("Master %d working counter(actual/expect): %u/%u\n",
                        global_cmd_master->index,
-                       global_cmd_master->expected_working_counter,
-                       global_cmd_master->actual_working_counter);
+                       global_cmd_master->actual_working_counter,
+                       global_cmd_master->expected_working_counter);
+
+            for (uint32_t i = 0; i < global_cmd_master->slave_count; i++) {
+                EC_LOG_RAW("%-3u  %u:%04x         (actual/expect): %u/%u\n",
+                           global_cmd_master->index,
+                           i,
+                           global_cmd_master->slaves[i].autoinc_address,
+                           global_cmd_master->slaves[i].actual_working_counter,
+                           global_cmd_master->slaves[i].expected_working_counter);
+            }
             return 0;
         } else {
         }

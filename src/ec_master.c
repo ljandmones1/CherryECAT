@@ -596,6 +596,7 @@ int ec_master_start(ec_master_t *master, uint32_t period_us)
         }
         slave->expected_working_counter = cyclic_datagram->expected_working_counter;
         master->expected_working_counter += slave->expected_working_counter;
+        cyclic_datagram->slave = slave;
 
         EC_SLAVE_LOG_INFO("Slave %u: Logical address 0x%08x, obyte %u, ibyte %u expected working counter %u\n",
                           slave->index,
@@ -820,6 +821,7 @@ EC_FAST_CODE_SECTION static void ec_master_period_process(void *arg)
         for (netdev_idx = EC_NETDEV_MAIN; netdev_idx < CONFIG_EC_MAX_NETDEVS; netdev_idx++) {
             if (cyclic_datagram->datagrams[netdev_idx].state == EC_DATAGRAM_RECEIVED) {
                 master->actual_working_counter += cyclic_datagram->datagrams[netdev_idx].working_counter;
+                cyclic_datagram->slave->actual_working_counter = cyclic_datagram->datagrams[netdev_idx].working_counter;
             }
         }
     }
